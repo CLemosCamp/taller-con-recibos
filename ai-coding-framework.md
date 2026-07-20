@@ -1,6 +1,6 @@
-> Versión de lectura del documento original de marzo de 2025 — [PDF original](ai-coding-framework.pdf). Transcripción fiel, sin actualizaciones.
+> Documento original de marzo de 2025, transcrito fiel y sin actualizaciones. Único cambio para publicación: se retiró del encabezado la marca de la startup en la que se escribió.
 
-**CHVR Labs** — **23/Marzo/2025** — **Cristopher Lemos**
+**23/Marzo/2025** — **Cristopher Lemos**
 
 # Ai Coding Framework
 
