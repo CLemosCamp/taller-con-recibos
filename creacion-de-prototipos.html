@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Creación de prototipos · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .note { font-size: 14.5px; color: var(--muted); }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted);
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Hero: la portada del deck (azul-noche fijo en ambos modos) */
+  .hero { background: #14243A; }
+  .hero-inner {
+    max-width: 920px; margin: 0 auto;
+    padding: 96px 22px 72px;
+  }
+  .hero h1 {
+    color: #FFFFFF; font-weight: 700; line-height: 1.08; letter-spacing: -0.02em;
+    font-size: clamp(38px, 7vw, 62px); margin: 0 0 20px;
+  }
+  .hero .h-accent { width: 72px; height: 3px; background: #46BD92; margin: 0 0 26px; }
+  .hero .h-name { color: #B8C4D4; font-size: clamp(15px, 2vw, 18px); font-weight: 500; }
+  .hero .h-date {
+    font-family: var(--mono); color: #B8C4D4; font-size: 12px;
+    letter-spacing: 0.14em; margin-top: 6px;
+  }
+  .transparency {
+    font-size: 14px; color: var(--muted); margin: 18px 0 0;
+  }
+
+  /* Secciones con eyebrow + regla */
+  section { padding: 64px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-size: clamp(24px, 4vw, 31px); line-height: 1.2; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 26px 0 10px;
+  }
+  h4 { font-size: 17.5px; font-weight: 650; margin: 28px 0 10px; }
+  .objetivo { font-size: 18px; max-width: 62ch; margin: 0 0 6px; }
+  .objetivo b { font-weight: 650; }
+  ul { margin: 0 0 1.1em; padding-left: 1.25em; }
+  li { margin: 0 0 7px; }
+  li::marker { color: var(--muted); }
+
+  /* El proceso de un vistazo: 5 tarjetas ancla */
+  .flow-wrap { overflow-x: auto; }
+  .flow {
+    display: flex; align-items: stretch; gap: 0;
+    min-width: 700px; margin: 8px 0 14px;
+  }
+  .step {
+    flex: 1 1 0; min-width: 0; text-decoration: none; color: inherit;
+    border: 1px solid var(--rule); border-radius: 3px; overflow: hidden;
+    background: #D8E5F2; display: flex; flex-direction: column;
+  }
+  .step:hover { border-color: var(--azul-medio); }
+  .step:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .step .band {
+    background: #1E3A5F; color: #FFFFFF; text-align: center;
+    font-family: var(--mono); font-size: 13px; font-weight: 700;
+    padding: 7px 0;
+  }
+  .step.is-pass .band { background: #158A5A; }
+  .step .body {
+    padding: 14px 12px; text-align: center; color: #182220;
+    font-size: 14px; line-height: 1.35; flex: 1;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .conn {
+    flex: 0 0 auto; align-self: center; padding: 0 6px;
+    color: var(--muted); font-family: var(--mono); font-size: 14px;
+  }
+  @media (max-width: 560px) {
+    .flow-wrap { overflow-x: visible; }
+    .flow { flex-direction: column; min-width: 0; }
+    .conn { transform: rotate(90deg); padding: 4px 0; text-align: center; }
+    .step .body { padding: 12px; }
+  }
+
+  /* Bloques de ejemplo (citas del deck) */
+  .example { margin: 0 0 26px; }
+  .example .tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 8px;
+  }
+  blockquote {
+    margin: 0 0 14px; padding: 12px 18px;
+    border-left: 3px solid var(--azul-medio);
+    background: var(--surface); border-radius: 0 3px 3px 0;
+    font-size: 16px; line-height: 1.55;
+  }
+  blockquote p { margin: 0 0 0.7em; }
+  blockquote p:last-child { margin-bottom: 0; }
+  .q-label {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted); display: block; margin-bottom: 3px;
+  }
+
+  /* Journey map (receta de diagrama) */
+  .fig-title {
+    font-size: 17px; font-weight: 650; margin: 22px 0 14px; color: var(--ink);
+  }
+  .journey-wrap { overflow-x: auto; }
+  .journey {
+    display: grid; grid-template-columns: 108px repeat(5, minmax(140px, 1fr));
+    gap: 8px; min-width: 880px; margin-bottom: 10px;
+  }
+  .j-head {
+    color: #FFFFFF; border-radius: 3px; padding: 10px 12px;
+    font-size: 13px; font-weight: 600; letter-spacing: 0.02em;
+    background: var(--azul-profundo);
+  }
+  .j-head.j-mid { background: var(--azul-medio); }
+  .j-rowlabel {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    display: flex; align-items: center; padding: 0 4px;
+  }
+  .j-cell {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 12px; font-size: 13px; line-height: 1.45; color: var(--ink);
+  }
+  .j-cell.j-soft { background: #D8E5F2; color: #182220; border-color: var(--rule); }
+
+  /* Storyboard: 6 viñetas */
+  .board {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin-bottom: 10px;
+  }
+  @media (max-width: 760px) { .board { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 480px) { .board { grid-template-columns: 1fr; } }
+  .panel {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 16px 16px 14px; display: flex; flex-direction: column; gap: 12px;
+  }
+  .panel .p-title { font-size: 14.5px; font-weight: 650; }
+  .panel .p-cap { font-size: 13.5px; line-height: 1.45; color: var(--muted); margin: 0; }
+  .sk {
+    align-self: center; width: 84px; height: 116px;
+    border: 1px solid var(--azul-medio); border-radius: 3px;
+    padding: 10px 9px; display: flex; flex-direction: column; gap: 7px;
+    justify-content: flex-start;
+  }
+  .sk-bar { height: 7px; border-radius: 2px; background: #D8E5F2; }
+  .sk-bar.sk-navy { background: #1E3A5F; }
+  .sk-line { height: 2px; background: var(--azul-medio); opacity: 0.65; }
+  .sk-row { display: flex; gap: 5px; align-items: center; }
+  .sk-dot { width: 10px; height: 10px; flex: none; background: #D8E5F2; border: 1px solid var(--azul-medio); }
+  .sk-dot.sk-gap { visibility: hidden; }
+  .sk-row .sk-line { flex: 1; }
+  .sk-btn {
+    margin-top: auto; height: 16px; border-radius: 3px; background: var(--azul-medio);
+    color: #FFFFFF; font-size: 8px; font-weight: 700; text-align: center; line-height: 16px;
+    font-family: var(--sans);
+  }
+  .sk-check {
+    width: 34px; height: 34px; border-radius: 50%; align-self: center; margin-top: 8px;
+    background: #D8E5F2; border: 1px solid var(--azul-medio);
+    display: flex; align-items: center; justify-content: center;
+    color: #1E3A5F; font-size: 16px; font-weight: 700;
+  }
+  .sk-box {
+    width: 40px; height: 32px; align-self: center; margin-top: 14px;
+    background: #D8E5F2; border: 1px solid #1E3A5F; position: relative;
+  }
+  .sk-box::after {
+    content: ""; position: absolute; left: 50%; top: 0; bottom: 0; width: 5px;
+    transform: translateX(-50%); background: var(--azul-medio); opacity: 0.55;
+  }
+
+  /* Validación: el verde con propósito */
+  .check {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.02em;
+    border: 1px solid var(--rule); background: var(--surface);
+    border-radius: 3px; padding: 8px 13px; color: var(--muted);
+  }
+  .check .tick {
+    width: 15px; height: 15px; border-radius: 50%; flex: none;
+    display: inline-flex; align-items: center; justify-content: center;
+    background: var(--pass-soft); color: var(--pass);
+    font-size: 10px; font-weight: 700;
+  }
+  .learning-card {
+    border: 1px solid var(--pass); border-radius: 3px; background: var(--pass-soft);
+    padding: 16px 18px; max-width: 56ch; margin: 6px 0 18px;
+  }
+  .learning-card .lc-tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--pass); font-weight: 700;
+    display: block; margin-bottom: 8px;
+  }
+  .learning-card p { margin: 0; font-size: 15.5px; line-height: 1.55; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    section { padding: 48px 0 8px; }
+    .hero-inner { padding: 72px 22px 56px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <span class="wordmark">cristopher <b>lemos</b></span>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<!-- Hero: la portada del deck -->
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Creación de prototipos</h1>
+    <div class="h-accent"></div>
+    <div class="h-name">Cristopher Lemos</div>
+    <div class="h-date">JULIO 2025</div>
+  </div>
+</header>
+
+<main>
+
+  <p class="transparency">Versión web (julio 2026) del deck original de julio de 2025.</p>
+
+  <!-- El proceso de un vistazo (agenda del deck) -->
+  <section id="proceso">
+    <div class="eyebrow">El proceso de un vistazo</div>
+    <h2>Agenda</h2>
+    <div class="flow-wrap">
+      <nav class="flow" aria-label="Pasos del proceso">
+        <a class="step" href="#s1">
+          <span class="band">1</span>
+          <span class="body">Alinear la hipótesis y el problema</span>
+        </a>
+        <span class="conn" aria-hidden="true">&#8594;</span>
+        <a class="step" href="#s2">
+          <span class="band">2</span>
+          <span class="body">Journey</span>
+        </a>
+        <span class="conn" aria-hidden="true">&#8594;</span>
+        <a class="step" href="#s3">
+          <span class="band">3</span>
+          <span class="body">Storyboard</span>
+        </a>
+        <span class="conn" aria-hidden="true">&#8594;</span>
+        <a class="step" href="#s4">
+          <span class="band">4</span>
+          <span class="body">Construir el prototipo</span>
+        </a>
+        <span class="conn" aria-hidden="true">&#8594;</span>
+        <a class="step is-pass" href="#s5">
+          <span class="band">5</span>
+          <span class="body">Validación</span>
+        </a>
+      </nav>
+    </div>
+    <p class="note">Cada paso lleva a su sección.</p>
+  </section>
+
+  <!-- 1. Alinear la hipótesis y el problema -->
+  <section id="s1">
+    <div class="eyebrow">01 · Alinear la hipótesis y el problema</div>
+    <h2>Alinear la hipótesis y el problema</h2>
+    <p class="objetivo"><b>Objetivo:</b> asegurar que todo el equipo comparta la misma pregunta a responder.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li><b>Problem Statement</b> (formato &ldquo;Para ___ que tienen ___, nuestra solución ___&rdquo;).</li>
+      <li><b>Lean Hypothesis</b> (si [x] entonces [y] medido por [z]). <a href="https://www.optimizely.com/optimization-glossary/lean-hypothesis-testing/">Referencia</a>.</li>
+      <li><b>Jobs-to-Be-Done interview snippets</b> para descubrir motivaciones. <a href="https://www.productplan.com/glossary/jobs-to-be-done-framework/">Referencia</a>.</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>One-pager con hipótesis, público objetivo y métrica de éxito (North Star).</li>
+      <li>Lista priorizada de supuestos críticos (Assumption Backlog).</li>
+    </ul>
+
+    <h3>Ejemplos de problem statement</h3>
+
+    <div class="example">
+      <h4>1. Problem Statement</h4>
+      <blockquote>
+        <p>&ldquo;En una app de pedidos para distribuidoras, el 38&nbsp;% de los tenderos abandona el proceso de pedido antes de completar el segundo paso. Esto genera una pérdida estimada de 2000 pedidos semanales y reduce la satisfacción del cliente (NPS &minus;12 puntos) frente al promedio de la industria.&rdquo;</p>
+      </blockquote>
+      <span class="tag">Estructura cubierta</span>
+      <ul>
+        <li><b>Qué ocurre:</b> alto abandono en pedidos.</li>
+        <li><b>Quién se ve afectado:</b> tenderos que usan la app de pedidos.</li>
+        <li><b>Impacto medible:</b> 2000 pedidos perdidos y NPS bajo.</li>
+        <li><b>Por qué importa:</b> afecta ingresos y fidelidad.</li>
+      </ul>
+    </div>
+
+    <div class="example">
+      <h4>2. Lean Hypothesis</h4>
+      <blockquote>
+        <p>Si simplificamos el flujo de pedido a un solo paso (X), entonces la tasa de finalización aumentará un 15&nbsp;% (Y) medida por la métrica &ldquo;order_completion_rate&rdquo; durante 4 semanas (Z).</p>
+      </blockquote>
+      <span class="tag">Fórmula</span>
+      <ul>
+        <li><b>Si [X]</b> &#8594; acción o cambio.</li>
+        <li><b>Entonces [Y]</b> &#8594; resultado esperado.</li>
+        <li><b>Medido por [Z]</b> &#8594; métrica y periodo.</li>
+      </ul>
+    </div>
+
+    <div class="example">
+      <h4>3. Jobs-to-Be-Done &mdash; Entrevista (snippet)</h4>
+      <blockquote>
+        <span class="q-label">Contexto reciente</span>
+        <p>&ldquo;Cuéntame sobre la última vez que necesitaste surtir tu tiendita con urgencia. ¿Qué sucedía ese día?&rdquo;</p>
+        <span class="q-label">Motivaciones y obstáculos</span>
+        <p>&ldquo;¿Qué estabas pensando cuando elegiste la app para hacer el pedido? ¿Qué te frustró en el camino?&rdquo;</p>
+        <span class="q-label">Resultados deseados</span>
+        <p>&ldquo;¿Cómo sabías que el pedido había sido un éxito? ¿Qué habría hecho la experiencia &lsquo;perfecta&rsquo; para ti?&rdquo;</p>
+      </blockquote>
+      <span class="tag">Por qué funciona</span>
+      <ul>
+        <li>Se ancla en un evento específico (&ldquo;última vez&rdquo;).</li>
+        <li>Explora emociones, no solo pasos.</li>
+        <li>Destapa criterios de éxito y fallas percibidas.</li>
+      </ul>
+    </div>
+  </section>
+
+  <!-- 2. Journey -->
+  <section id="s2">
+    <div class="eyebrow">02 · Journey</div>
+    <h2>Journey</h2>
+    <p class="objetivo"><b>Objetivo:</b> visualizar el flujo completo y qué aprender en cada punto.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li><b>Customer Journey Map</b> rápido enfocando &ldquo;momentos de verdad&rdquo;.</li>
+      <li><b>Story Mapping</b> de Jeff Patton: pasos horizontales + profundidad vertical.</li>
+      <li><b>Experiment Canvas</b> para cada parte del flujo (prototipo &ne; producto final).</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>Storyboard de 6-8 viñetas.</li>
+      <li>Matriz &ldquo;Parte del prototipo &harr; supuesto &harr; métrica de validación&rdquo;.</li>
+    </ul>
+
+    <p class="fig-title">Customer Journey Map: el tendero surte su tienda</p>
+    <div class="journey-wrap">
+      <div class="journey" role="table" aria-label="Customer journey map del tendero">
+        <div></div>
+        <div class="j-head">1. Necesidad</div>
+        <div class="j-head j-mid">2. Contacto</div>
+        <div class="j-head">3. Armado del pedido</div>
+        <div class="j-head j-mid">4. Confirmación</div>
+        <div class="j-head">5. Entrega</div>
+
+        <div class="j-rowlabel">Acciones</div>
+        <div class="j-cell">Detecta faltantes en el anaquel</div>
+        <div class="j-cell">Abre la app y consulta el catálogo</div>
+        <div class="j-cell">Agrega productos al carrito</div>
+        <div class="j-cell">Revisa el total y confirma el pedido</div>
+        <div class="j-cell">Recibe y verifica la mercancía</div>
+
+        <div class="j-rowlabel">Emoción</div>
+        <div class="j-cell j-soft">Urgencia por no perder ventas</div>
+        <div class="j-cell j-soft">Expectativa: ¿habrá stock?</div>
+        <div class="j-cell j-soft">Duda con precios y presentaciones</div>
+        <div class="j-cell j-soft">Alivio si el resumen es claro</div>
+        <div class="j-cell j-soft">Satisfacción si llega completo</div>
+
+        <div class="j-rowlabel">Oportunidades</div>
+        <div class="j-cell">Alertas de re-surtido</div>
+        <div class="j-cell">Búsqueda rápida y favoritos</div>
+        <div class="j-cell">Sugerencias y combos</div>
+        <div class="j-cell">Confirmación en un solo paso</div>
+        <div class="j-cell">Seguimiento de la entrega</div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Storyboard -->
+  <section id="s3">
+    <div class="eyebrow">03 · Storyboard</div>
+    <h2>Storyboard</h2>
+    <p class="objetivo"><b>Objetivo:</b> bajar el riesgo técnico y de usabilidad al mínimo coste.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li><b>Crazy-8s</b> o <b>Design Studio</b> para generar variantes rápidas. <a href="https://www.uifrommars.com/guia-completa-crazy-8s/">Referencia</a>.</li>
+      <li><b>Service Blueprint</b> sencillo (frontstage / backstage) si hay servicio humano.</li>
+      <li>&ldquo;Riesgo primero&rdquo;: ordenar qué se prototipa según impacto &times; incertidumbre.</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>Wireframes de baja fidelidad (papel o FigJam).</li>
+      <li>Criterios de test cut-off (qué invalida la hipótesis).</li>
+    </ul>
+
+    <p class="fig-title">Storyboard en 6 viñetas: un pedido en la app</p>
+    <div class="board">
+      <div class="panel">
+        <span class="p-title">1. La necesidad</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-dot sk-gap"></span><span class="sk-dot"></span></div>
+          <div class="sk-line"></div>
+          <div class="sk-row"><span class="sk-dot sk-gap"></span><span class="sk-dot"></span><span class="sk-dot"></span></div>
+          <div class="sk-line"></div>
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-dot"></span><span class="sk-dot sk-gap"></span></div>
+          <div class="sk-line"></div>
+        </div>
+        <p class="p-cap">El tendero nota que se acaban varios productos</p>
+      </div>
+      <div class="panel">
+        <span class="p-title">2. El acceso</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-bar sk-navy"></div>
+          <div class="sk-bar"></div>
+          <div class="sk-bar"></div>
+          <div class="sk-bar"></div>
+        </div>
+        <p class="p-cap">Abre la app de pedidos de su distribuidora</p>
+      </div>
+      <div class="panel">
+        <span class="p-title">3. El armado</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-line"></span></div>
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-line"></span></div>
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-line"></span></div>
+          <div class="sk-row"><span class="sk-dot"></span><span class="sk-line"></span></div>
+        </div>
+        <p class="p-cap">Busca productos y los agrega al carrito</p>
+      </div>
+      <div class="panel">
+        <span class="p-title">4. La confirmación</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-line"></div>
+          <div class="sk-line"></div>
+          <div class="sk-line"></div>
+          <div class="sk-btn">Confirmar</div>
+        </div>
+        <p class="p-cap">Revisa el resumen y confirma en un paso</p>
+      </div>
+      <div class="panel">
+        <span class="p-title">5. La espera</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-check">&#10003;</div>
+          <div class="sk-line" style="margin-top: auto;"></div>
+        </div>
+        <p class="p-cap">Recibe confirmación con fecha de entrega</p>
+      </div>
+      <div class="panel">
+        <span class="p-title">6. El cierre</span>
+        <div class="sk" aria-hidden="true">
+          <div class="sk-box"></div>
+        </div>
+        <p class="p-cap">Recibe el pedido y verifica que esté completo</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Construcción del prototipo -->
+  <section id="s4">
+    <div class="eyebrow">04 · Construcción del prototipo</div>
+    <h2>Construcción del prototipo</h2>
+    <p class="objetivo"><b>Objetivo:</b> crear algo lo bastante real para gatillar la reacción deseada.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li><b>Fidelity ladder:</b> empieza en papel &#8594; clickeable (Figma/InVision) &#8594; Wizard-of-Oz/Concierge.</li>
+      <li>Reutilizar <b>Design System</b> o UI kits para acelerar.</li>
+      <li>Definir <b>&ldquo;Golden Path&rdquo;</b> (flujo feliz) y fakear el resto.</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>Prototipo interactivo + guía de navegación.</li>
+      <li>Registro de cambios con fecha e hipótesis asociada (&ldquo;Build-Measure&rdquo; log).</li>
+    </ul>
+  </section>
+
+  <!-- 5. Validación -->
+  <section id="s5">
+    <div class="eyebrow">05 · Validación</div>
+
+    <h2>Entrevistas y pruebas de validación</h2>
+    <p class="objetivo"><b>Objetivo:</b> medir si el prototipo resuelve el problema y aprender por qué/por qué no.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li><b>Customer Discovery Interview</b> (problema antes que solución; 5 por ronda).</li>
+      <li><b>Think-Aloud Usability Test</b> (3-5 usuarios revelan 80&nbsp;% de issues).</li>
+      <li><b>5-Second Test</b> para primera impresión y mensaje.</li>
+      <li><b>RICE</b> o <b>Confidence Meter</b> post-test para decidir siguiente paso.</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>Guía de entrevista + script de tareas.</li>
+      <li>Tablero de capturas (quotes, pain points, delight).</li>
+      <li>Learning Card:</li>
+    </ul>
+    <div class="learning-card">
+      <span class="lc-tag">&#10003; Learning Card</span>
+      <p>&ldquo;Esperábamos ___, observamos ___, aprendimos ___, decidimos ___&rdquo;</p>
+    </div>
+
+    <h2 style="margin-top: 44px;">Cierre del experimento y decisión</h2>
+    <p class="objetivo"><b>Objetivo:</b> transformar los hallazgos en acción clara.</p>
+
+    <h3>Técnicas clave</h3>
+    <ul>
+      <li>Taller <b>&ldquo;Stop / Start / Continue&rdquo;</b>.</li>
+      <li><b>Pivot-or-Persevere meeting</b> (máx. 30 min; votación basada en evidencia).</li>
+    </ul>
+
+    <h3>Artefactos</h3>
+    <ul>
+      <li>Resumen de insights &harr; hipótesis (1 diapositiva por hipótesis).</li>
+      <li>Roadmap de siguiente sprint de descubrimiento o construcción.</li>
+    </ul>
+  </section>
+
+  <footer>creación de prototipos · jul 2025 · versión web jul 2026</footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+  })();
+</script>
+</body>
+</html>
