@@ -9,6 +9,7 @@ Métodos y artefactos de trabajo con IA, publicados con sus recibos: cada pieza 
 | [Plantilla de prep de sesión](prep-de-sesion.md) | Cómo diseñar una sesión de descubrimiento alrededor de salidas verificables, no de temas — con un ejemplo llenado | jul 2026 |
 | [AI Coding Framework](ai-coding-framework.md) | Framework para construir software con IA, tal como se escribió en su momento. Una versión actualizada al stack de 2026 vendrá como pieza aparte | mar 2025 |
 | [Instructivo: prototipo con IA](instructivo-prototipo-con-ia.md) | Cómo llegar a un mock navegable sin saber programar: 6 pasos, los dos prompts y un PRD de ejemplo | mar 2025 |
+| [Creación de prototipos](creacion-de-prototipos.pdf) | Deck didáctico del proceso completo de prototipado: hipótesis y problema, journey y story mapping, storyboarding, prototipo y validación. Preparado originalmente en Iguana Digital, el estudio digital de mi familia, donde soy socio y asesor | jul 2025 |
 
 Los documentos se leen en markdown; cuando existe un original diseñado (PDF), se conserva enlazado como recibo fechado.
 
