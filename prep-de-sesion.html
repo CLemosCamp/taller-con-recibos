@@ -1,0 +1,445 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Plantilla de prep de sesión · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; max-width: 72ch; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .note { font-size: 14.5px; color: var(--muted); }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted); text-decoration: none;
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .wordmark:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  .wordmark:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Encabezado de documento (sin hero: página de documento, no deck) */
+  .doc-header { padding: 56px 0 0; }
+  .doc-header h1 {
+    font-size: clamp(30px, 5.5vw, 44px); line-height: 1.12; font-weight: 700;
+    letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance;
+  }
+  .doc-meta {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  .doc-note { font-size: 14.5px; color: var(--muted); margin: 0 0 4px; }
+  .doc-intro { margin-top: 30px; }
+
+  /* Secciones con eyebrow + regla */
+  section { padding: 56px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-size: clamp(24px, 4vw, 31px); line-height: 1.2; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 26px 0 10px;
+  }
+  h4 { font-size: 17.5px; font-weight: 650; margin: 28px 0 10px; }
+  ul { margin: 0 0 1.1em; padding-left: 1.25em; }
+  ol { margin: 0 0 1.1em; padding-left: 1.5em; }
+  li { margin: 0 0 7px; max-width: 70ch; }
+  li::marker { color: var(--muted); }
+  li > ul, li > ol { margin-top: 7px; margin-bottom: 4px; }
+
+  blockquote {
+    margin: 0 0 14px; padding: 12px 18px;
+    border-left: 3px solid var(--azul-medio);
+    background: var(--surface); border-radius: 0 3px 3px 0;
+    font-size: 16px; line-height: 1.55;
+  }
+  blockquote p { margin: 0 0 0.7em; }
+  blockquote p:last-child { margin-bottom: 0; }
+
+  /* Bloque copiable */
+  .codeblock { position: relative; margin: 6px 0 26px; }
+  .codeblock pre {
+    margin: 0; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: 18px 20px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--ink);
+  }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    padding: 5px 12px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--bg); color: var(--muted);
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-btn.is-done { border-color: var(--pass); color: var(--pass); background: var(--pass-soft); }
+
+  /* El ejemplo maquetado como documento */
+  .doc-card {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 26px 28px 18px; margin: 10px 0 26px;
+  }
+  .doc-card .dc-title {
+    font-family: var(--mono); font-size: 13.5px; font-weight: 700;
+    letter-spacing: 0.02em; margin: 0 0 14px;
+  }
+  .doc-card blockquote { background: var(--bg); }
+  .doc-card h3:first-of-type { margin-top: 20px; }
+  @media (max-width: 560px) { .doc-card { padding: 18px 16px 10px; } }
+
+  /* Tablas (receta de diagrama: headers azul-profundo, celdas con borde 1px) */
+  .table-wrap { overflow-x: auto; margin: 4px 0 1.3em; }
+  table { border-collapse: collapse; width: 100%; min-width: 540px; font-size: 14px; line-height: 1.45; }
+  th {
+    background: var(--azul-profundo); color: #FFFFFF; text-align: left;
+    font-weight: 600; font-size: 13px; letter-spacing: 0.02em;
+    padding: 8px 12px; border: 1px solid var(--azul-profundo);
+  }
+  td { border: 1px solid var(--rule); padding: 9px 12px; vertical-align: top; }
+
+  /* Por qué cada bloque: lista de definiciones */
+  dl { margin: 0 0 1.1em; }
+  dt { font-weight: 650; margin: 0 0 2px; }
+  dd { margin: 0 0 16px; max-width: 70ch; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    section { padding: 44px 0 8px; }
+    .doc-header { padding: 44px 0 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <a class="wordmark" href="index.html">cristopher <b>lemos</b></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<main>
+
+  <!-- Encabezado de documento -->
+  <header class="doc-header">
+    <div class="eyebrow">Plantilla · Jul 2026</div>
+    <h1>Plantilla · Prep de sesión de descubrimiento</h1>
+    <p class="doc-note">Versión web (jul 2026). Canónico textual: <a href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/prep-de-sesion.md">prep-de-sesion.md</a>.</p>
+
+    <div class="doc-intro">
+      <p>Una sesión se diseña alrededor de las <b>salidas</b> (con qué te vas), no de los temas que se conversan. Cada salida es un entregable verificable; al cierre, el resultado se puntúa contra la lista.</p>
+      <p>Dos piezas hacen el trabajo pesado:</p>
+      <ul>
+        <li><b>Regla de oro</b> — la única cosa irremplazable de la sesión. Se nombra antes de entrar y se custodia en vivo, no sólo en el plan.</li>
+        <li><b>Orden de sacrificio</b> — qué se recorta primero cuando el tiempo aprieta, para que el recorte no lo decida el reloj.</li>
+      </ul>
+    </div>
+  </header>
+
+  <!-- La plantilla -->
+  <section id="plantilla">
+    <div class="eyebrow">La plantilla</div>
+    <h2>Copia lo de abajo y sustituye</h2>
+
+    <div class="codeblock">
+      <button class="copy-btn" type="button" data-copy="tpl" aria-label="Copiar la plantilla">copiar</button>
+      <pre id="tpl"># Prep · &lt;sesión&gt; · &lt;fecha&gt; · &lt;cliente&gt;
+&gt; Interno. Encuadre en una línea: qué es esta sesión y qué NO se reabre.
+
+## Regla de oro
+La única cosa irremplazable de estos N minutos: __________.
+Orden de sacrificio si aprieta el tiempo: A → B → C → [la regla de oro no se sacrifica].
+
+## Salidas (con qué nos vamos)
+1. ________  · vive en → doc #
+2. ________  · vive en → doc #
+… (si falta alguna al cierre, se agenda follow-up ANTES de salir)
+
+## Preguntas por bloque
+- &lt;bloque&gt;: pregunta, pregunta…
+
+## Run-of-show (min)
+| Tiempo | Bloque | Qué pasa |
+
+## Reparto
+| Quién | Lleva |  (uno es DUEÑO de que las salidas se cumplan)
+
+## Datos a pedir/recibir hoy
+## Riesgos y manejo</pre>
+    </div>
+
+    <h3>Notas de uso</h3>
+    <ul>
+      <li>Si una salida falta al cierre, el follow-up se agenda <b>antes de salir de la sala</b>, no después.</li>
+      <li>Pide consentimiento para grabar. Un segundo dispositivo grabando es seguro barato.</li>
+    </ul>
+  </section>
+
+  <!-- Ejemplo -->
+  <section id="ejemplo">
+    <div class="eyebrow">Ejemplo</div>
+    <h2>Ejemplo: la plantilla llenada</h2>
+    <p>Caso ficticio, para ilustrar el formato: una sesión de descubrimiento previa a construir el <b>Bot de Pedidos</b> (un bot B2B de levantamiento de pedidos por WhatsApp/voz), con "la Distribuidora", una distribuidora regional de abarrotes que surte a tienditas. Ningún dato corresponde a una empresa real.</p>
+
+    <article class="doc-card">
+      <p class="dc-title">Prep · Descubrimiento de levantamiento de pedidos · 2026-08-03 · La Distribuidora</p>
+      <blockquote>
+        <p>Interno. Entender cómo el equipo de ventas levanta hoy un pedido de una tiendita de punta a punta, para diseñar el flujo del Bot de Pedidos. NO se reabre: precio, condiciones comerciales o cobertura de rutas (eso ya está definido con el cliente).</p>
+      </blockquote>
+
+      <h3>Regla de oro</h3>
+      <p>La única cosa irremplazable de estos 90 minutos: ver a un capturista levantar un pedido real de una tiendita, de punta a punta, con sus herramientas en pantalla (WhatsApp, catálogo, sistema de captura) — no que nos lo describan de memoria.</p>
+      <p>Orden de sacrificio si aprieta el tiempo: preguntas sobre reportes y dashboard actuales → detalle de excepciones raras (devoluciones, crédito) → recorrido de la app de catálogo interno → [la regla de oro no se sacrifica: la demostración en vivo del pedido de punta a punta se protege aunque se corte todo lo demás].</p>
+
+      <h3>Salidas (con qué nos vamos)</h3>
+      <ol>
+        <li>Grabación (o notas minuto a minuto) de un pedido real levantado de punta a punta · vive en → doc #1</li>
+        <li>Diagrama de los pasos que sigue el capturista desde que llega el mensaje/llamada de la tiendita hasta que el pedido queda registrado · vive en → doc #2</li>
+        <li>Lista de los canales reales que usan hoy las tienditas para pedir (WhatsApp, llamada, nota de voz, visita del vendedor) con % aproximado de uso por canal · vive en → doc #2</li>
+        <li>Ejemplo real de un pedido "difícil" (producto sin stock, tiendita que regatea cantidad, pedido incompleto) y cómo lo resuelve hoy el capturista · vive en → doc #3</li>
+        <li>Catálogo de productos vigente exportado (CSV o captura de pantalla del sistema actual) · vive en → doc #4</li>
+        <li>Lista de 3-5 tienditas piloto con contacto directo, para pruebas del bot · vive en → doc #5</li>
+      </ol>
+      <p class="note">… (si falta alguna al cierre, se agenda follow-up ANTES de salir)</p>
+
+      <h3>Preguntas por bloque</h3>
+      <ul>
+        <li><b>Apertura y encuadre:</b> ¿quién en la sala levanta pedidos día a día? ¿podemos ver su pantalla mientras trabaja?</li>
+        <li><b>Recorrido en vivo del pedido:</b> ¿por dónde entra el pedido (WhatsApp, llamada, visita)? ¿qué hace primero al recibirlo? ¿dónde lo captura? ¿qué revisa antes de confirmarlo (stock, crédito, mínimo de pedido)?</li>
+        <li><b>Excepciones:</b> ¿qué pasa si el producto no tiene stock? ¿si la tiendita pide fiado o pasa su límite de crédito? ¿si el pedido llega incompleto o con dudas?</li>
+        <li><b>Canales y volumen:</b> ¿qué porcentaje de tienditas pide por WhatsApp vs. llamada vs. visita del vendedor? ¿hay tienditas que prefieren nota de voz?</li>
+        <li><b>Catálogo y datos:</b> ¿el catálogo que usa el capturista está actualizado en algún sistema o es una lista en papel/Excel? ¿podemos quedarnos con una copia?</li>
+        <li><b>Cierre:</b> ¿qué tienditas estarían dispuestas a probar un piloto del bot? ¿quién de su equipo sería el punto de contacto?</li>
+      </ul>
+
+      <h3>Run-of-show (min)</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Tiempo</th><th>Bloque</th><th>Qué pasa</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>0-10</td><td>Apertura y encuadre</td><td>Confirmamos objetivo de la sesión, pedimos consentimiento para grabar, presentamos al equipo</td></tr>
+            <tr><td>10-45</td><td>Recorrido en vivo del pedido</td><td>El capturista levanta un pedido real de una tiendita frente a nosotros, con su pantalla compartida</td></tr>
+            <tr><td>45-65</td><td>Excepciones y canales</td><td>Preguntas sobre casos difíciles, canales reales de entrada y su distribución aproximada</td></tr>
+            <tr><td>65-80</td><td>Catálogo y datos</td><td>Revisión y exportación del catálogo vigente; confirmación de qué datos nos pueden compartir hoy mismo</td></tr>
+            <tr><td>80-88</td><td>Cierre y compromisos</td><td>Confirmamos tienditas piloto, punto de contacto, y qué salidas quedaron pendientes</td></tr>
+            <tr><td>88-90</td><td>Buffer</td><td>Colchón para preguntas que se hayan quedado fuera</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Reparto</h3>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr><th>Quién</th><th>Lleva</th></tr>
+          </thead>
+          <tbody>
+            <tr><td>Cristopher</td><td>Conduce la sesión y protege la regla de oro (DUEÑO de que las salidas se cumplan)</td></tr>
+            <tr><td>Analista de producto</td><td>Toma notas estructuradas y arma el diagrama de pasos (salida #2)</td></tr>
+            <tr><td>Contacto en La Distribuidora (gerente de ventas)</td><td>Facilita al capturista y a las tienditas piloto</td></tr>
+          </tbody>
+        </table>
+      </div>
+
+      <h3>Datos a pedir/recibir hoy</h3>
+      <ul>
+        <li>Catálogo de productos vigente (CSV o export del sistema actual).</li>
+        <li>Contacto de 3-5 tienditas piloto.</li>
+        <li>Si existe, algún reporte o Excel donde hoy consoliden pedidos por ruta.</li>
+      </ul>
+
+      <h3>Riesgos y manejo</h3>
+      <ul>
+        <li>El capturista "actúa" un pedido en vez de mostrar uno real (se limpia y ordena para quedar bien) → pedir explícitamente ver el siguiente pedido que entre de forma natural durante la sesión, no uno preparado de antemano.</li>
+        <li>La sesión se llena de quejas sobre el sistema actual y no llegamos al recorrido en vivo → recordar el encuadre al inicio y cortar con "eso lo anotamos, volvamos al pedido en pantalla" si se desvía.</li>
+        <li>El gerente de ventas responde por el capturista y no lo deja mostrar cómo trabaja realmente → dirigir las preguntas de recorrido directamente al capturista, no al gerente.</li>
+      </ul>
+    </article>
+  </section>
+
+  <!-- Por qué cada bloque -->
+  <section id="por-que">
+    <div class="eyebrow">Por qué cada bloque</div>
+    <h2>Por qué cada bloque</h2>
+    <dl>
+      <dt>Encuadre</dt>
+      <dd>fija qué no se reabre, para no perder los 90 minutos discutiendo algo ya decidido.</dd>
+      <dt>Regla de oro</dt>
+      <dd>qué proteger cuando el tiempo apriete — si sólo sale una cosa de la sesión, que sea esa.</dd>
+      <dt>Orden de sacrificio</dt>
+      <dd>decide el recorte antes de que lo decida el reloj, en caliente.</dd>
+      <dt>Salidas</dt>
+      <dd>con qué te vas, no de qué hablas — cada una es verificable y vive en un documento concreto.</dd>
+      <dt>Preguntas por bloque</dt>
+      <dd>el guion mínimo para no improvisar en vivo, organizado por lo que cada bloque necesita producir.</dd>
+      <dt>Run-of-show</dt>
+      <dd>el presupuesto de tiempo explícito, para notar a mitad de sesión si vas atrasado.</dd>
+      <dt>Reparto</dt>
+      <dd>quién hace qué y quién responde si al final falta una salida.</dd>
+      <dt>Datos a pedir/recibir hoy</dt>
+      <dd>lo que se puede llevar en la mano al salir de la sala, sin depender de un follow-up.</dd>
+      <dt>Riesgos y manejo</dt>
+      <dd>los modos de falla previsibles de esta sesión específica, con la reacción ya decidida de antemano.</dd>
+    </dl>
+  </section>
+
+  <footer>plantilla · prep de sesión de descubrimiento · jul 2026 · canónico: prep-de-sesion.md</footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+
+    document.querySelectorAll(".copy-btn").forEach(function (cb) {
+      cb.addEventListener("click", function () {
+        var pre = document.getElementById(cb.getAttribute("data-copy"));
+        if (!pre || !navigator.clipboard || !navigator.clipboard.writeText) return;
+        navigator.clipboard.writeText(pre.innerText).then(function () {
+          cb.classList.add("is-done");
+          cb.textContent = "copiado";
+          setTimeout(function () {
+            cb.classList.remove("is-done");
+            cb.textContent = "copiar";
+          }, 1600);
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

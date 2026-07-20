@@ -1,0 +1,500 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Instructivo: prototipo con IA · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; max-width: 72ch; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .note { font-size: 14.5px; color: var(--muted); }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted); text-decoration: none;
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .wordmark:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  .wordmark:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Encabezado de documento (sin hero: página de documento, no deck) */
+  .doc-header { padding: 56px 0 0; }
+  .doc-header h1 {
+    font-size: clamp(30px, 5.5vw, 44px); line-height: 1.12; font-weight: 700;
+    letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance;
+  }
+  .doc-meta {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  .doc-note { font-size: 14.5px; color: var(--muted); margin: 0 0 4px; }
+  .doc-intro { margin-top: 30px; }
+
+  /* Secciones con eyebrow + regla */
+  section { padding: 56px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-size: clamp(24px, 4vw, 31px); line-height: 1.2; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 30px 0 12px;
+  }
+  h4 { font-size: 17.5px; font-weight: 650; margin: 28px 0 10px; }
+  ul { margin: 0 0 1.1em; padding-left: 1.25em; }
+  ol { margin: 0 0 1.1em; padding-left: 1.5em; }
+  li { margin: 0 0 7px; max-width: 70ch; }
+  li::marker { color: var(--muted); }
+  li > ul, li > ol { margin-top: 7px; margin-bottom: 4px; }
+
+  blockquote {
+    margin: 0 0 14px; padding: 12px 18px;
+    border-left: 3px solid var(--azul-medio);
+    background: var(--surface); border-radius: 0 3px 3px 0;
+    font-size: 16px; line-height: 1.55;
+  }
+  blockquote p { margin: 0 0 0.7em; }
+  blockquote p:last-child { margin-bottom: 0; }
+
+  /* Bloques copiables (prompts) */
+  .codeblock { position: relative; margin: 6px 0 26px; }
+  .codeblock pre {
+    margin: 0; background: var(--surface);
+    border: 1px solid var(--rule); border-radius: 3px;
+    padding: 18px 20px; overflow-x: auto;
+    font-family: var(--mono); font-size: 13px; line-height: 1.6; color: var(--ink);
+  }
+  .copy-btn {
+    position: absolute; top: 10px; right: 10px;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.06em;
+    padding: 5px 12px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--bg); color: var(--muted);
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-btn.is-done { border-color: var(--pass); color: var(--pass); background: var(--pass-soft); }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    section { padding: 44px 0 8px; }
+    .doc-header { padding: 44px 0 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <a class="wordmark" href="index.html">cristopher <b>lemos</b></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<main>
+
+  <!-- Encabezado de documento -->
+  <header class="doc-header">
+    <div class="eyebrow">Instructivo · Mar 2025</div>
+    <h1>Instrucciones para crear un prototipo funcional con Cursor</h1>
+    <p class="doc-note">Versión web (jul 2026). Canónico textual: <a href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/instructivo-prototipo-con-ia.md">instructivo-prototipo-con-ia.md</a>.</p>
+
+    <div class="doc-intro">
+      <blockquote>
+        <p>Escrito en marzo de 2025. Se publica con las herramientas y modelos de su época (ChatGPT O1, Cursor, Replit) — el flujo sigue siendo válido con las herramientas de hoy: sustituye los nombres. Único cambio para publicación: el PRD de ejemplo original era de un producto real y se sustituyó por un caso ficticio equivalente (jul-2026).</p>
+      </blockquote>
+
+      <p>Para un usuario <b>no técnico</b> que necesita un mock front-end navegable para una presentación comercial.</p>
+      <ol>
+        <li>Redactar una breve descripción de necesidades del producto.</li>
+        <li>Pedir a ChatGPT (modelo O1) que te ayude a completar un documento tipo PRD.</li>
+        <li><b>Nota:</b> en caso de ya tener un documento de negocio, unos requerimientos o detalles del producto, se pueden saltar los pasos 1 y 2.</li>
+        <li>Rebotar la definición de ese documento con Cursor y ayuda del prompt.</li>
+        <li>Cursor te va a generar preguntas y debes contestarlas.</li>
+        <li>Cursor te va a generar un documento adicional, y ése debes solicitar a un nuevo chat de Cursor que te haga el mock.</li>
+      </ol>
+    </div>
+  </header>
+
+  <!-- Prompt para el mock -->
+  <section id="prompt-mock">
+    <div class="eyebrow">Prompt · El mock</div>
+    <h2>Prompt para el mock</h2>
+    <div class="codeblock">
+      <button class="copy-btn" type="button" data-copy="prompt-mock-text" aria-label="Copiar el prompt para el mock">copiar</button>
+      <pre id="prompt-mock-text">Estoy trabajando en un proyecto llamado &lt;nombre del proyecto&gt;, está descrito en el documento adjunto
+Mi objetivo es poder construir un mock para una presentación comercial.
+Quiero que me hagas las preguntas adecuadas para lograr aterrizar mejor mi idea del mock.
+Soy un usuario poco técnico por lo que las dudas técnicas no son mi fuerte
+Quiero lograr construir una versión aunque no funcional, pudiera ser puro front end básico con movimiento entre pantallas.
+Esto para una presentación comercial</pre>
+    </div>
+  </section>
+
+  <!-- Prompt para rebotar definición de negocio -->
+  <section id="prompt-o1">
+    <div class="eyebrow">Prompt · Rebotar con O1</div>
+    <h2>Prompt para rebotar definición de negocio con O1</h2>
+    <div class="codeblock">
+      <button class="copy-btn" type="button" data-copy="prompt-o1-text" aria-label="Copiar el prompt para rebotar la definición de negocio">copiar</button>
+      <pre id="prompt-o1-text">Quiero afinar mis definiciones de negocio para un producto que estoy pensando
+Quiero que me hagas las preguntas adecuadas para poder afinar mis definiciones de negocio
+Te comparto mi descripción inicial del producto:
+&lt;descripción del producto&gt;
+Te comparto un formato de PRD que puedes usar de ejemplo para que entiendas lo que estoy buscando
+&lt;ejemplo prd&gt;</pre>
+    </div>
+  </section>
+
+  <!-- Ejemplo: PRD -->
+  <section id="ejemplo-prd">
+    <div class="eyebrow">Ejemplo ilustrativo</div>
+    <blockquote>
+      <p><b>Ejemplo ilustrativo</b> — producto ficticio para mostrar el formato.</p>
+      <p>Nota de publicación: el ejemplo original del instructivo usaba un producto real; se sustituyó por este caso ficticio equivalente (jul-2026), manteniendo formato y nivel de detalle.</p>
+    </blockquote>
+    <h2>Ejemplo formato Product Requirements Document (PRD) - Bot de Pedidos IA</h2>
+  </section>
+
+  <!-- PRD 1: Visión del producto -->
+  <section id="prd-vision">
+    <div class="eyebrow">PRD · 1 · Visión del Producto</div>
+    <h2>1. Visión del Producto</h2>
+    <p>El <b>Bot de Pedidos IA</b> busca revolucionar la forma en que las distribuidoras (particularmente las que surten a tienditas y abarrotes) levantan y procesan pedidos de sus clientes. Se trata de un <b>producto B2B</b> capaz de:</p>
+    <ul>
+      <li>Guiar a la distribuidora en la <b>definición y configuración</b> de su catálogo y su flujo de toma de pedidos.</li>
+      <li>Coordinar el <b>levantamiento de pedidos</b> por voz o texto (WhatsApp, llamadas telefónicas) directamente con el tendero.</li>
+      <li>Entregar visibilidad de alto valor a través de un <b>dashboard dinámico</b> y un agente conversacional que ayuda a <b>consultar y analizar</b> los pedidos de manera automática.</li>
+    </ul>
+
+    <h3>Objetivos Principales</h3>
+    <ol>
+      <li><b>Agilidad en la Configuración del Catálogo y Flujo de Pedido</b><br>
+        Un agente que interactúe con el usuario (distribuidora) en lenguaje natural para definir de forma semiestructurada el catálogo de productos, precios, reglas de pedido mínimo y el flujo que debe seguir la toma de pedido.</li>
+      <li><b>Automatización del Levantamiento de Pedidos</b><br>
+        Un sistema capaz de <b>levantar los pedidos</b> mediante llamada o mensajes de texto/WhatsApp con el tendero, extrayendo cantidades y productos de manera natural y almacenándolos en una base de datos interna.</li>
+      <li><b>Análisis y Visualización de Pedidos</b><br>
+        Un tercer agente que permita <b>consultar, graficar y extraer</b> los datos de pedidos (CSV, reportes básicos) y responder dudas sobre volumen, productos más pedidos y comportamiento de tienditas.</li>
+      <li><b>Escalabilidad y Facilidad de Integración</b><br>
+        Diseñar la arquitectura para que sea posible cambiar el proveedor de IA (inicialmente OpenAI) y escalar el número de tienditas y distribuidoras atendidas.</li>
+    </ol>
+  </section>
+
+  <!-- PRD 2: Casos de uso -->
+  <section id="prd-casos">
+    <div class="eyebrow">PRD · 2 · Casos de Uso</div>
+    <h2>2. Casos de Uso</h2>
+
+    <h3>2.1 Distribuidora (Primer Cliente Objetivo)</h3>
+    <ul>
+      <li><b>Definición del Catálogo y Flujo</b>: El equipo de la distribuidora sube un listado de productos y precios (ej. en CSV) y, mediante un chat con el "agente de diseño", define:
+        <ul>
+          <li>Catálogo de productos vigente (SKUs, precios, presentaciones).</li>
+          <li>Reglas de pedido (pedido mínimo, días de entrega, zonas cubiertas).</li>
+          <li>Tipo de información a confirmar con el tendero (cantidad, sustitutos si falta stock, etc.).</li>
+        </ul>
+      </li>
+      <li><b>Levantamiento del Pedido</b>: El "agente de pedidos" procede a contactar a la base de tienditas asignadas a cada ruta a través de:
+        <ul>
+          <li><b>Llamada telefónica</b> automatizada (voz).</li>
+          <li><b>WhatsApp</b> (texto).</li>
+        </ul>
+      </li>
+      <li><b>Análisis de la Información</b>: El "agente analítico" ofrece:
+        <ul>
+          <li>Estadísticas básicas (número de pedidos levantados, tasa de respuesta por ruta).</li>
+          <li>Visualizaciones dinámicas (gráficas generadas en tiempo real de productos más pedidos).</li>
+          <li>Exportación de datos en CSV para conciliar con el sistema de facturación de la distribuidora.</li>
+        </ul>
+      </li>
+    </ul>
+
+    <h3>2.2 Empresa Final (Futuro)</h3>
+    <ul>
+      <li>Una marca de consumo masivo con ruta directa a tiendita podría usar el sistema directamente para levantar pedidos de reposición sin pasar por una distribuidora intermedia.</li>
+      <li>Sin embargo, en el MVP, se prioriza a la <b>distribuidora</b> como cliente principal.</li>
+    </ul>
+  </section>
+
+  <!-- PRD 3: Funcionalidades clave -->
+  <section id="prd-funcionalidades">
+    <div class="eyebrow">PRD · 3 · Funcionalidades Clave</div>
+    <h2>3. Funcionalidades Clave</h2>
+    <ol>
+      <li><b>Agente de Diseño de Catálogo y Flujo (Chat Interactivo)</b>
+        <ul>
+          <li>Flujo de <b>conversación semiestructurada</b> que guía al usuario a definir:
+            <ul>
+              <li>Catálogo de productos y precios vigentes.</li>
+              <li>Reglas del pedido (mínimos, sustitutos, días y horarios de corte).</li>
+              <li>Tipo de confirmaciones esperadas (cantidad exacta, unidades vs. cajas, etc.) aunque la interacción con el tendero sea natural.</li>
+            </ul>
+          </li>
+          <li>Posibilidad de <b>personalizar el flujo de pedido</b> completamente (no solo plantillas).</li>
+        </ul>
+      </li>
+      <li><b>Carga de Tienditas</b>
+        <ul>
+          <li><b>Importación masiva</b> de contactos de tienditas vía CSV/Excel, con ruta y vendedor asignado.</li>
+          <li>Almacenamiento en base de datos interna, segmentado por ruta y por distribuidora.</li>
+        </ul>
+      </li>
+      <li><b>Agente de Levantamiento de Pedido</b>
+        <ul>
+          <li><b>Modalidades</b>:
+            <ul>
+              <li><b>Llamadas</b> a teléfonos celulares (interfaz de voz).</li>
+              <li><b>Mensajes de WhatsApp</b> (texto conversacional).</li>
+            </ul>
+          </li>
+          <li><b>IA semiestructurada</b> para mantener el objetivo del pedido, aun si la conversación da rodeos (ej. el tendero pregunta por promociones o pide cambiar cantidades a media conversación).</li>
+          <li>Manejo de <b>Estado</b>: detecta si el tendero ya confirmó todos los productos del pedido habitual o si hace falta preguntar por algo adicional.</li>
+        </ul>
+      </li>
+      <li><b>Almacenamiento y Gestión de Pedidos</b>
+        <ul>
+          <li>Base de datos interna (sin integraciones externas en el MVP).</li>
+          <li>Segmentación de resultados por <b>distribuidora</b>, por <b>ruta</b> y por <b>tiendita</b>.</li>
+        </ul>
+      </li>
+      <li><b>Agente Analítico y Dashboard</b>
+        <ul>
+          <li>Posibilidad de <b>consultar</b> los datos por medio de una interfaz conversacional ("Muéstrame cuántas tienditas pidieron X producto esta semana").</li>
+          <li><b>Visualizaciones dinámicas</b> (gráficas de barras, pastel, mapas de calor por ruta, etc.) generadas automáticamente a partir de los datos.</li>
+          <li><b>Exportación</b> de reportes o datos en CSV.</li>
+          <li>Métricas básicas (número de pedidos levantados, tasa de tienditas contactadas que sí pidieron, resúmenes de productos más solicitados).</li>
+          <li>(Futuro) Personalización más avanzada de widgets o dashboards.</li>
+        </ul>
+      </li>
+    </ol>
+  </section>
+
+  <!-- PRD 4: Requisitos técnicos y alcance -->
+  <section id="prd-requisitos">
+    <div class="eyebrow">PRD · 4 · Requisitos Técnicos y Alcance</div>
+    <h2>4. Requisitos Técnicos y Alcance</h2>
+
+    <h3>4.1 Arquitectura y Proveedor de IA</h3>
+    <ul>
+      <li>Uso inicial de <b>OpenAI</b> para los modelos de lenguaje (GPT-4o según se decida).</li>
+      <li>Diseño modular para <b>cambiar de proveedor</b> en el futuro (Azure, Anthropic, etc.).</li>
+      <li>Flujo <b>semiestructurado</b> en la parte conversacional para evitar que la IA se desvíe del objetivo del pedido.</li>
+    </ul>
+
+    <h3>4.2 Modalidades de Interacción (MVP)</h3>
+    <ul>
+      <li><b>Idiomas</b>: Español (en MVP).</li>
+      <li><b>Pedidos por Voz</b>: Llamadas a celular por medio de un servicio de telefonía (API de Twilio).</li>
+      <li><b>Pedidos por Texto</b>: Uso de WhatsApp (API oficial).</li>
+    </ul>
+
+    <h3>4.3 Seguridad y Privacidad</h3>
+    <ul>
+      <li>En el MVP <b>no</b> se contemplan requisitos especiales de cifrado o cumplimiento normativo avanzado (GDPR, CCPA, etc.).</li>
+      <li>Se almacenan datos de contacto de tienditas y detalle de pedidos de manera interna.</li>
+    </ul>
+
+    <h3>4.4 Despliegue y Escalabilidad</h3>
+    <ul>
+      <li><b>Cloud first</b> (AWS).</li>
+      <li>En el MVP, se espera un volumen de <b>cientos de tienditas</b> y <b>un solo cliente (la distribuidora)</b>.</li>
+      <li>La arquitectura deberá poder <b>escalar</b> con un diseño modular.</li>
+    </ul>
+  </section>
+
+  <!-- PRD 5: MVP -->
+  <section id="prd-mvp">
+    <div class="eyebrow">PRD · 5 · MVP: Detalles y Alcance</div>
+    <h2>5. MVP: Detalles y Alcance</h2>
+    <p>El MVP se enfocará en ofrecer las <b>tres funcionalidades principales</b> con una primera versión simplificada de cada una:</p>
+    <ol>
+      <li><b>Agente de Diseño de Catálogo y Flujo</b>
+        <ul>
+          <li>Interfaz conversacional básica para definir catálogo, precios y reglas de pedido.</li>
+          <li>Creación de un flujo de pedido semiestructurado que pueda ajustarse a medida que se conversa con el bot.</li>
+        </ul>
+      </li>
+      <li><b>Agente de Levantamiento de Pedido</b>
+        <ul>
+          <li>Capacidad de contactar a las tienditas vía llamada telefónica o WhatsApp.</li>
+          <li>Captura del pedido en un formato consistente (texto plano, con algún etiquetado mínimo de producto/cantidad).</li>
+          <li>Manejo simple de reintentos (por si la tiendita no contesta o pide que la vuelvan a llamar más tarde).</li>
+        </ul>
+      </li>
+      <li><b>Agente Analítico y Dashboard</b>
+        <ul>
+          <li>Almacenamiento de pedidos en la base de datos.</li>
+          <li>Generación de <b>gráficas automáticas</b> (por ejemplo, conteo de pedidos por ruta o distribución de productos más pedidos).</li>
+          <li>Exportación a CSV y visualización de métricas iniciales.</li>
+          <li>Consulta conversacional básica: "¿Cuántas tienditas pidieron el producto X esta semana?" y se despliega la métrica.</li>
+        </ul>
+      </li>
+    </ol>
+
+    <h3>5.1 Out of Scope (Para Futuros Lanzamientos)</h3>
+    <ul>
+      <li>Cumplimiento con GDPR u otras regulaciones de datos.</li>
+      <li>Integraciones con sistemas ERP o de facturación externos (SAP, CONTPAQi, etc.).</li>
+      <li>Procesamiento avanzado de audio en múltiples idiomas.</li>
+      <li>Personalización exhaustiva del dashboard o creación de plantillas de flujo de pedido predefinidas.</li>
+      <li>Modelos de pricing y marketplace de complementos.</li>
+    </ul>
+  </section>
+
+  <footer>instructivo · prototipo con ia · mar 2025 · versión web jul 2026 · canónico: instructivo-prototipo-con-ia.md</footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+
+    document.querySelectorAll(".copy-btn").forEach(function (cb) {
+      cb.addEventListener("click", function () {
+        var pre = document.getElementById(cb.getAttribute("data-copy"));
+        if (!pre || !navigator.clipboard || !navigator.clipboard.writeText) return;
+        navigator.clipboard.writeText(pre.innerText).then(function () {
+          cb.classList.add("is-done");
+          cb.textContent = "copiado";
+          setTimeout(function () {
+            cb.classList.remove("is-done");
+            cb.textContent = "copiar";
+          }, 1600);
+        });
+      });
+    });
+  })();
+</script>
+</body>
+</html>

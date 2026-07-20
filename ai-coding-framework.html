@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>AI Coding Framework · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 860px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; max-width: 72ch; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .note { font-size: 14.5px; color: var(--muted); }
+  code {
+    font-family: var(--mono); font-size: 0.88em;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 1px 5px;
+  }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted); text-decoration: none;
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .wordmark:hover { text-decoration: underline; text-decoration-color: var(--accent); text-underline-offset: 3px; }
+  .wordmark:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Encabezado de documento (sin hero: página de documento, no deck) */
+  .doc-header { padding: 56px 0 0; }
+  .doc-header h1 {
+    font-size: clamp(30px, 5.5vw, 44px); line-height: 1.12; font-weight: 700;
+    letter-spacing: -0.02em; margin: 0 0 10px; text-wrap: balance;
+  }
+  .doc-meta {
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.08em;
+    color: var(--muted); margin: 0 0 8px;
+  }
+  .doc-note { font-size: 14.5px; color: var(--muted); margin: 0 0 4px; }
+  .doc-intro { margin-top: 30px; }
+
+  /* Secciones con eyebrow + regla */
+  section { padding: 56px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-size: clamp(24px, 4vw, 31px); line-height: 1.2; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 34px 0 12px;
+  }
+  h4 { font-size: 17.5px; font-weight: 650; margin: 28px 0 10px; }
+  ul { margin: 0 0 1.1em; padding-left: 1.25em; }
+  ol { margin: 0 0 1.1em; padding-left: 1.5em; }
+  li { margin: 0 0 7px; max-width: 70ch; }
+  li::marker { color: var(--muted); }
+  li > ul, li > ol { margin-top: 7px; margin-bottom: 4px; }
+  ol ol { list-style: lower-alpha; }
+  ol ol ol { list-style: lower-roman; }
+
+  blockquote {
+    margin: 0 0 14px; padding: 12px 18px;
+    border-left: 3px solid var(--azul-medio);
+    background: var(--surface); border-radius: 0 3px 3px 0;
+    font-size: 16px; line-height: 1.55;
+  }
+  blockquote p { margin: 0 0 0.7em; }
+  blockquote p:last-child { margin-bottom: 0; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    section { padding: 44px 0 8px; }
+    .doc-header { padding: 44px 0 0; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <a class="wordmark" href="index.html">cristopher <b>lemos</b></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<main>
+
+  <!-- Encabezado de documento -->
+  <header class="doc-header">
+    <div class="eyebrow">Documento · Mar 2025</div>
+    <h1>Ai Coding Framework</h1>
+    <p class="doc-meta">23/Marzo/2025 — Cristopher Lemos</p>
+    <p class="doc-note">Versión web (jul 2026). Canónico textual: <a href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/ai-coding-framework.md">ai-coding-framework.md</a>.</p>
+
+    <div class="doc-intro">
+      <blockquote>
+        <p>Documento original de marzo de 2025, transcrito fiel y sin actualizaciones. Único cambio para publicación: se retiró del encabezado la marca de la startup en la que se escribió.</p>
+      </blockquote>
+      <p>Este framework está diseñado para construir software documentado y testeado para usuarios poco técnicos o para usuarios técnicos que se quieran ahorrar unas horas.</p>
+    </div>
+  </header>
+
+  <!-- Fase de diseño de producto -->
+  <section id="diseno-producto">
+    <div class="eyebrow">Fase · Diseño de producto</div>
+    <h2>Fase de diseño de producto</h2>
+
+    <p>En esta fase debes de poner los puntos sobre las íes de tu solución. Al finalizar esta fase debes de tener el documento de Definición de producto detallada.</p>
+    <p>Para lograr esto debes de entender muy bien tu problema. Preguntas como las siguientes tienes que tenerlas muy claras, si no, te va a tocar pensar mucho en ellas:</p>
+    <ol>
+      <li>¿Quién es tu público objetivo?</li>
+      <li>¿Qué es lo que les duele?</li>
+      <li>¿Por qué cambiarían lo que están haciendo ahora por tu solución?</li>
+      <li>¿Les vas a ahorrar dinero?
+        <ol>
+          <li>¿Es fácilmente cuantificable cuánto les vas a ahorrar?</li>
+          <li>¿Tiene que haber labor de convencimiento para que crean que les vas a ahorrar dinero?</li>
+        </ol>
+      </li>
+      <li>¿Qué problema les vas a solucionar?</li>
+      <li>¿Cómo lo vas a solucionar?
+        <ol>
+          <li>¿Hay otros componentes de tecnología involucrados?</li>
+          <li>¿Tus usuarios son adeptos a la tecnología?</li>
+          <li>¿Tu mercado tiene el digital literacy para usar tu producto?</li>
+        </ol>
+      </li>
+      <li>¿Cuáles son los elementos de tu solución?</li>
+      <li>¿Cómo se comunican entre sí los elementos de tu solución?</li>
+      <li>¿Quién le escribe/pregunta/escucha qué a quién?</li>
+      <li>¿Qué tiene que hacer cada elemento?</li>
+    </ol>
+
+    <p>Una vez teniendo estas preguntas claras debes de proceder a escribir tu definición del producto:</p>
+    <ol>
+      <li>Las preguntas del punto 1 te pueden ayudar a definir tu solución.</li>
+      <li>Si eres un usuario poco técnico te recomiendo completar en la rango i - vi</li>
+      <li>Si eres un usuario técnico, las preguntas del vii - x te pueden ayudar a estructurar tu documento de definición.</li>
+    </ol>
+
+    <p>Una vez habiendo escrito tus definiciones iniciales el siguiente paso es rebotarla con un modelo de razonamiento (yo uso O1, pero claude sonnet 3.7 thinking tiene buen rendimiento también).</p>
+    <ol>
+      <li>Recomendaciones de peticiones a O1:
+        <ol>
+          <li>Solicítale que te ayude a profundizar sobre tus definiciones de negocio.</li>
+          <li>Solicítale que te haga preguntas acerca de tu producto para mejorar tus definiciones de negocio</li>
+          <li>Explícale que este documento luego será usado por desarrolladores para construir la solución.</li>
+        </ol>
+      </li>
+    </ol>
+
+    <p>Finalmente debes de guardar tu definición en un documento en forma ".md" dentro del repositorio (carpeta) para luego poder rebotar con cursor o windsurf.</p>
+  </section>
+
+  <!-- Fase de diseño técnico -->
+  <section id="diseno-tecnico">
+    <div class="eyebrow">Fase · Diseño técnico</div>
+    <h2>Fase de diseño técnico</h2>
+
+    <p>En esta fase debes aterrizar la definición técnica. Al finalizar esta fase debes de tener los siguientes documentos:</p>
+    <ol>
+      <li>Arquitectura de la solución</li>
+      <li>Plan de implementación</li>
+      <li>Documento detallando estructura de documentación</li>
+      <li>Documento detallando estructura de pruebas</li>
+    </ol>
+
+    <h3>Arquitectura de la solución</h3>
+    <p>Con ayuda de cursor o windsurf debes de construir la arquitectura de tu producto. Debes solicitarle que:</p>
+    <ol>
+      <li>Basado en tu definición de producto te ayude a construir la arquitectura de tu solución.</li>
+      <li>Solicítale que te haga preguntas acerca de tu producto y tus necesidades.</li>
+      <li>Recuerda que tu arquitectura debe considerar:
+        <ol>
+          <li>Elementos de la solución</li>
+          <li>Cómo se comunican entre ellos</li>
+          <li>Inputs del sistema</li>
+          <li>Operaciones intermedias</li>
+          <li>Outputs del sistema</li>
+        </ol>
+      </li>
+    </ol>
+
+    <h3>Plan de implementación</h3>
+    <p>En este plan de implementación debes pedir que considere lo siguiente:</p>
+    <ol>
+      <li>En este plan de implementación debes de dividir (con ayuda de cursor o windsurf) tu solución en fases. Dependiendo de la complejidad de tu solución puedes pedir lo siguiente:
+        <ol>
+          <li><b>Solución sencilla</b> con pocos detalles técnicos, sin necesidades especiales de seguridad, concurrencia, escalabilidad: <b>5 - 6 fases</b> de desarrollo.</li>
+          <li>Solución intermedia con varios puntos de integración, con varios modulos, que involucren varios clientes: <b>10 - 12 fases</b></li>
+          <li>Soluciones complejas: en este caso recomiendo subdividir tu solución en elementos más pequeños. <b>(Otro artículo en cómo lograr esto)</b></li>
+        </ol>
+      </li>
+      <li>Para la división en fases debes de indicar que como te gusta construir productos es:
+        <ol>
+          <li>Construir pruebas</li>
+          <li>Construir funcionalidad</li>
+          <li>Construir documentación</li>
+        </ol>
+      </li>
+      <li>Es importante que construyamos una funcionalidad a la vez. Debes de mencionar esto en el plan de implementación.</li>
+      <li>Debes de solicitarle que dentro del plan de implementación te muestre el avance de las fases del proyecto:
+        <ol>
+          <li>Debes pedirte que sea conciso y te muestre solo el nivel de granularidad necesario y el número de avance</li>
+          <li>Las reglas para considerar una fase completada son:
+            <ol>
+              <li>Funcionalidad 100% implementada</li>
+              <li>Funcionalidad 100% documentada</li>
+              <li>Funcionalidad 95% testeada</li>
+            </ol>
+          </li>
+        </ol>
+      </li>
+      <li>Debes pedirle que guarde este documento en formato .md dentro de la carpeta de documentación del proyecto. Tu documento debe de contener lo siguiente:
+        <ol>
+          <li>Resumen ejecutivo</li>
+          <li>Estado de fases del proyecto</li>
+          <li>Próximos pasos</li>
+          <li>Historial de actualizaciones</li>
+        </ol>
+      </li>
+      <li>Debes solicitarle que actualice el documento después de finalizar cada fase. Cuando actualice el plan debes pedirle que mantenga el mismo formato que ya tiene la documentación. Debemos evitar hacer cambios a la documentación y la arquitectura a menos que sean estrictamente necesarios.</li>
+    </ol>
+
+    <h3>Estructura de documentación</h3>
+    <p>Debes solicitar que te ayude a construir una estructura de documentación que considere:</p>
+    <ol>
+      <li>Documentación detallada para <b>todos</b> los componentes de tu solución. Cada archivo nuevo que se cree, cada servicio, cada parte de tu documentación debe estar documentada.</li>
+      <li>Yo utilizo una estrategia de documentación donde guardo toda mi documentación en una carpeta <code>/docs/</code> y luego una estructura de carpetas "espejo".</li>
+      <li>Debes pedir que actualice la documentación cada que hagas un cambio en tu código. (Es más caro en tokens, pero es más barato en bugs).</li>
+      <li>Cuando actualice la documentación debes pedirle que mantenga el mismo formato que ya tiene la documentación. Debemos evitar hacer cambios a esta documentación y la arquitectura a menos que sean estrictamente necesarios.</li>
+      <li>Tu estructura de documentación debe considerar lo siguiente:
+        <ol>
+          <li>Estructura de carpetas</li>
+          <li>Tipos de documentación</li>
+          <li>Templates de documentación</li>
+          <li>Herramientas de automatización</li>
+        </ol>
+      </li>
+      <li>Al final tu documento de estrategia de documentación debes de guardarlo en formato md dentro de tu carpeta de documentación.</li>
+    </ol>
+
+    <h3>Estructura de pruebas</h3>
+    <p>Debes solicitar que te ayude a construir una estructura de pruebas que considere:</p>
+    <ol>
+      <li>Todos los componentes de tu solución deben de ser testeado y debemos llegar a un coverage de +95%</li>
+      <li>Tu documento de pruebas debe de contener lo siguiente:
+        <ol>
+          <li>Estructura de carpetas</li>
+          <li>Tipos de pruebas</li>
+          <li>Coverage</li>
+          <li>Convenios de nomenclatura</li>
+          <li>Fixtures y mocks</li>
+          <li>Herramientas de automatización</li>
+          <li>Guías para pruebas</li>
+        </ol>
+      </li>
+      <li>Al final tu documento de estrategia de documentación debes de guardarlo en formato md dentro de tu carpeta de documentación.</li>
+    </ol>
+  </section>
+
+  <!-- Fase de construcción -->
+  <section id="construccion">
+    <div class="eyebrow">Fase · Construcción</div>
+    <h2>Fase de construcción</h2>
+
+    <p>La arquitectura, estructura de documentación, estructura de pruebas y documento de seguimiento que hemos creado en la fase de diseño técnico, nos ayudarán a que la construcción sea más fluida, rápida y fácil de debuggear.</p>
+    <p>Para empezar a construir tu solución debes de solicitarle al modo agente de cursor o de windsurf que empiece a construir tu solución con la fase 1. En este chat debes de darle toda la documentación que hemos creado hasta este punto para que tenga el contexto adecuado y construir tu solución. Adicional debes de decirle que te haga todas las preguntas necesarias para puntualizar este componente o fase.</p>
+    <p>Usualmente la fase 1 que te va a sugerir cursor o windsurf van a ser la creación de la estructura de carpetas del repo:</p>
+    <ul>
+      <li>Es fundamental que la estructura que se cree considere la estructura de la documentación y pruebas que hemos definido en el punto anterior.</li>
+    </ul>
+    <p>A partir de la siguiente fase debes de considerar que la forma de construir tu solución debe ser por fases o funcionalidades. Vamos a inspirarnos en una estrategia llamada extreme programming y seguir los siguientes pasos para construir:</p>
+    <ol>
+      <li>Construir pruebas</li>
+      <li>Construir funcionalidad</li>
+      <li>Correr las pruebas</li>
+      <li>Construir documentación</li>
+    </ol>
+    <p>Es muy importante que construyamos una funcionalidad a la vez. Debes mencionar esto en el chat con el agente.</p>
+    <p>Una vez que el agente haya construido tanto las pruebas como la funcionalidad, debes solicitarle que corra las pruebas. Aquí te van a empezar a salir bugs y simplemente le dejas a cursor o windsurf que las resuelva.</p>
+    <p>Es muy importante que todas las pruebas pasen antes de construir la documentación, para que nuestra documentación sea lo más alineada posible.</p>
+    <p>Si en el proceso de construcción, se cambian otras partes de tu producto, debes solicitar que se actualice esa documentación también.</p>
+    <p>Al finalizar cada funcionalidad debes pedir que actualice el documento de plan de implementación, para siempre tener una vista actual de donde estamos parados.</p>
+  </section>
+
+  <!-- Tips adicionales -->
+  <section id="tips">
+    <div class="eyebrow">Tips adicionales</div>
+    <h2>Tips adicionales</h2>
+    <ul>
+      <li>Si no sabes en qué fase estás puedes pedirle a tu IDE que haga un assesment del avance en cualquier momento.</li>
+      <li>Usa chats separados para cada funcionalidad, porque puede perderse entre tanto contexto.</li>
+      <li>El "ask" te puede servir para alinear dudas. El "agente" hará todo el trabajo automáticamente por tí.</li>
+    </ul>
+  </section>
+
+  <footer>ai coding framework · 23/marzo/2025 · versión web jul 2026 · canónico: ai-coding-framework.md</footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+  })();
+</script>
+</body>
+</html>

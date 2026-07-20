@@ -1,0 +1,275 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Taller, con recibos · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted);
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Hero editorial (fondo de página, no portada de deck) */
+  .hero { padding: 84px 0 20px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  .hero h1 {
+    font-weight: 700; line-height: 1.08; letter-spacing: -0.02em;
+    font-size: clamp(36px, 6.5vw, 56px); margin: 0 0 18px; color: var(--ink);
+  }
+  .dek {
+    font-family: var(--serif); font-size: clamp(18px, 2.6vw, 21px);
+    line-height: 1.55; max-width: 58ch; color: var(--ink); margin: 0;
+  }
+
+  /* Índice de artefactos */
+  section { padding: 52px 0 8px; }
+  .cards {
+    display: grid; grid-template-columns: repeat(2, 1fr); gap: 14px;
+    margin: 8px 0 14px;
+  }
+  @media (max-width: 720px) { .cards { grid-template-columns: 1fr; } }
+  .card {
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 20px 20px 18px; display: flex; flex-direction: column; gap: 10px;
+  }
+  .card .c-date {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--muted); margin: 0;
+  }
+  .card h2 {
+    font-size: 19px; line-height: 1.3; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0; color: var(--ink);
+  }
+  .card .c-desc { font-size: 15px; line-height: 1.55; margin: 0; color: var(--ink); }
+  .card .c-muted { font-size: 13.5px; line-height: 1.5; margin: 0; color: var(--muted); }
+  .card .c-links { display: flex; gap: 8px; margin-top: auto; padding-top: 6px; }
+  .pill {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 5px 14px; text-decoration: none;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--bg); color: var(--accent);
+  }
+  .pill:hover { border-color: var(--accent); }
+  .pill:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+    display: flex; flex-wrap: wrap; gap: 6px 18px; justify-content: space-between;
+  }
+  footer a { color: var(--accent); }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    .hero { padding: 64px 0 12px; }
+    section { padding: 40px 0 8px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <span class="wordmark">cristopher <b>lemos</b></span>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<main>
+
+  <header class="hero">
+    <div class="eyebrow">Taller, con recibos</div>
+    <h1>Taller, con recibos</h1>
+    <p class="dek">Métodos y artefactos de trabajo con IA, publicados con sus recibos: cada pieza sale de trabajo real y fechado, no de teoría.</p>
+  </header>
+
+  <section id="artefactos" aria-label="Índice de artefactos">
+    <div class="cards">
+
+      <article class="card">
+        <p class="c-date">jul 2026</p>
+        <h2>Plantilla de prep de sesión</h2>
+        <p class="c-desc">Cómo diseñar una sesión de descubrimiento alrededor de salidas verificables, no de temas — con un ejemplo llenado.</p>
+        <div class="c-links">
+          <a class="pill" href="prep-de-sesion.html">html</a>
+          <a class="pill" href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/prep-de-sesion.md">md</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="c-date">mar 2025</p>
+        <h2>AI Coding Framework</h2>
+        <p class="c-desc">Framework para construir software con IA, tal como se escribió en su momento. Una versión actualizada al stack de 2026 vendrá como pieza aparte.</p>
+        <div class="c-links">
+          <a class="pill" href="ai-coding-framework.html">html</a>
+          <a class="pill" href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/ai-coding-framework.md">md</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="c-date">mar 2025</p>
+        <h2>Instructivo: prototipo con IA</h2>
+        <p class="c-desc">Cómo llegar a un mock navegable sin saber programar: 6 pasos, los dos prompts y un PRD de ejemplo.</p>
+        <div class="c-links">
+          <a class="pill" href="instructivo-prototipo-con-ia.html">html</a>
+          <a class="pill" href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/instructivo-prototipo-con-ia.md">md</a>
+        </div>
+      </article>
+
+      <article class="card">
+        <p class="c-date">jul 2025</p>
+        <h2>Creación de prototipos</h2>
+        <p class="c-desc">Deck didáctico del proceso completo de prototipado: hipótesis y problema, journey y story mapping, storyboarding, prototipo y validación.</p>
+        <p class="c-muted">Preparado originalmente en Iguana Digital, el estudio digital de mi familia, donde soy socio y asesor.</p>
+        <div class="c-links">
+          <a class="pill" href="creacion-de-prototipos.html">html</a>
+          <a class="pill" href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/creacion-de-prototipos.md">md</a>
+        </div>
+      </article>
+
+    </div>
+  </section>
+
+  <footer>
+    <span>taller con recibos · cristopher lemos</span>
+    <a href="https://github.com/CLemosCamp/taller-con-recibos">repo en github</a>
+  </footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+  })();
+</script>
+</body>
+</html>
