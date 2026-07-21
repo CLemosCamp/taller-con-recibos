@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Prompts para desarrolladores · Cristopher Lemos</title>
+<style>
+  :root {
+    /* Neutrales */
+    --bg: #F7F8F5;
+    --surface: #FFFFFF;
+    --ink: #182220;
+    --muted: #5C6A63;
+    --rule: #DCE3DC;
+    /* Azules (estructura) */
+    --azul-noche: #14243A;
+    --azul-profundo: #1E3A5F;
+    --azul-medio: #2F6DAE;
+    --azul-suave: #D8E5F2;
+    /* Verdes (verificación) */
+    --accent: #0C6B52;
+    --pass: #158A5A;
+    --pass-soft: #E1F1E8;
+    --fail: #B0453C;
+    --fail-soft: #F6E7E4;
+    /* Tipografía */
+    --mono: "SF Mono", "Cascadia Code", Menlo, Consolas, monospace;
+    --serif: "Iowan Old Style", "Palatino Linotype", Palatino, Georgia, serif;
+    --sans: -apple-system, "Segoe UI", Roboto, Inter, sans-serif;
+  }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) {
+      --bg: #0F1513;
+      --surface: #161E1A;
+      --ink: #E6EBE7;
+      --muted: #93A29A;
+      --rule: #26312B;
+      --azul-medio: #4E8FD0;
+      --accent: #46BD92;
+      --pass: #4FC08D;
+      --pass-soft: #17281F;
+      --fail: #DE8177;
+      --fail-soft: #2E1D1A;
+    }
+  }
+  :root[data-theme="dark"] {
+    --bg: #0F1513;
+    --surface: #161E1A;
+    --ink: #E6EBE7;
+    --muted: #93A29A;
+    --rule: #26312B;
+    --azul-medio: #4E8FD0;
+    --accent: #46BD92;
+    --pass: #4FC08D;
+    --pass-soft: #17281F;
+    --fail: #DE8177;
+    --fail-soft: #2E1D1A;
+  }
+
+  .only-dark { display: none; }
+  .only-light { display: inline; }
+  @media (prefers-color-scheme: dark) {
+    :root:not([data-theme="light"]) .only-dark { display: inline; }
+    :root:not([data-theme="light"]) .only-light { display: none; }
+  }
+  :root[data-theme="dark"] .only-dark { display: inline; }
+  :root[data-theme="dark"] .only-light { display: none; }
+  :root[data-theme="light"] .only-light { display: inline; }
+  :root[data-theme="light"] .only-dark { display: none; }
+
+  * { box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    margin: 0;
+    background: var(--bg);
+    color: var(--ink);
+    font-family: var(--sans);
+    font-size: 17px;
+    line-height: 1.6;
+    -webkit-font-smoothing: antialiased;
+  }
+  main { max-width: 920px; margin: 0 auto; padding: 0 22px 40px; }
+  p { margin: 0 0 1.1em; }
+  a { color: var(--accent); text-decoration-thickness: 1px; text-underline-offset: 3px; }
+  .note { font-size: 14.5px; color: var(--muted); }
+
+  /* Barra de progreso */
+  .progress {
+    position: fixed; top: 0; left: 0; height: 2px; width: 0;
+    background: var(--accent); z-index: 60;
+  }
+
+  /* Topbar sticky */
+  .topbar {
+    position: sticky; top: 0; z-index: 50;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 12px 20px;
+    background: color-mix(in srgb, var(--bg) 88%, transparent);
+    backdrop-filter: blur(8px);
+    border-bottom: 1px solid var(--rule);
+  }
+  .wordmark {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.08em;
+    text-transform: lowercase; color: var(--muted);
+    text-decoration: none;
+  }
+  .wordmark b { color: var(--accent); font-weight: 600; }
+  .theme-toggle {
+    font-family: var(--mono); font-size: 11.5px; letter-spacing: 0.06em;
+    padding: 6px 14px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); color: var(--muted);
+  }
+  .theme-toggle:hover { border-color: var(--accent); color: var(--accent); }
+  .theme-toggle:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+
+  /* Hero: la portada del deck (azul-noche fijo en ambos modos) */
+  .hero { background: #14243A; }
+  .hero-inner {
+    max-width: 920px; margin: 0 auto;
+    padding: 96px 22px 72px;
+  }
+  .hero h1 {
+    color: #FFFFFF; font-weight: 700; line-height: 1.08; letter-spacing: -0.02em;
+    font-size: clamp(38px, 7vw, 62px); margin: 0 0 20px;
+  }
+  .hero .h-accent { width: 72px; height: 3px; background: #46BD92; margin: 0 0 26px; }
+  .hero .h-name { color: #B8C4D4; font-size: clamp(15px, 2vw, 18px); font-weight: 500; }
+  .hero .h-date {
+    font-family: var(--mono); color: #B8C4D4; font-size: 12px;
+    letter-spacing: 0.14em; margin-top: 6px;
+  }
+  .hero .h-origin {
+    color: #93A6BC; font-size: 14px; line-height: 1.5; margin: 22px 0 0;
+    max-width: 60ch;
+  }
+  .transparency {
+    font-size: 14px; color: var(--muted); margin: 18px 0 0;
+  }
+
+  /* Secciones con eyebrow + regla */
+  section { padding: 64px 0 8px; }
+  .eyebrow {
+    font-family: var(--mono); font-size: 12px; letter-spacing: 0.14em;
+    text-transform: uppercase; color: var(--accent);
+    display: flex; align-items: center; gap: 14px; margin: 0 0 20px;
+  }
+  .eyebrow::after { content: ""; flex: 1; height: 1px; background: var(--rule); }
+  h2 {
+    font-size: clamp(24px, 4vw, 31px); line-height: 1.2; font-weight: 650;
+    letter-spacing: -0.01em; margin: 0 0 18px; text-wrap: balance;
+  }
+  h3 {
+    font-family: var(--mono); font-size: 11.5px; font-weight: 650;
+    letter-spacing: 0.12em; text-transform: uppercase; color: var(--muted);
+    margin: 26px 0 10px;
+  }
+  h4 { font-size: 17.5px; font-weight: 650; margin: 28px 0 10px; }
+  .lead { font-size: 18px; max-width: 68ch; margin: 0 0 16px; }
+  .objetivo { font-size: 18px; max-width: 66ch; margin: 0 0 6px; }
+  .objetivo b { font-weight: 650; }
+  ul, ol { margin: 0 0 1.1em; padding-left: 1.25em; }
+  li { margin: 0 0 7px; }
+  li::marker { color: var(--muted); }
+  .io-label {
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    text-transform: uppercase; color: var(--muted);
+    margin: 18px 0 8px; font-weight: 650;
+  }
+  .io-label .val { color: var(--pass); }
+
+  /* Agenda: tarjetas ancla clicables */
+  .agenda {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 14px; margin: 8px 0 12px;
+  }
+  @media (max-width: 700px) { .agenda { grid-template-columns: repeat(2, 1fr); } }
+  @media (max-width: 440px) { .agenda { grid-template-columns: 1fr; } }
+  .card {
+    text-decoration: none; color: inherit; overflow: hidden;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--surface); display: flex; flex-direction: column;
+  }
+  .card:hover { border-color: var(--azul-medio); }
+  .card:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .card .band {
+    background: #1E3A5F; color: #FFFFFF;
+    font-family: var(--mono); font-size: 11px; letter-spacing: 0.1em;
+    padding: 7px 12px;
+  }
+  .card .card-body {
+    padding: 12px 14px 14px; color: var(--ink);
+    font-size: 15px; line-height: 1.35; font-weight: 600;
+  }
+  .card .card-sub { display: block; font-weight: 400; font-size: 13px; color: var(--muted); margin-top: 4px; }
+
+  /* Bloques de código / prompt */
+  .codeblock { position: relative; margin: 0 0 22px; }
+  .codeblock pre {
+    overflow-x: auto; margin: 0;
+    background: var(--surface); border: 1px solid var(--rule); border-radius: 3px;
+    padding: 16px 18px; padding-right: 92px;
+    font-family: var(--mono); font-size: 13.5px; line-height: 1.55; color: var(--ink);
+    white-space: pre;
+  }
+  .copy-btn {
+    position: absolute; top: 8px; right: 8px;
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.06em;
+    text-transform: uppercase; padding: 5px 10px; cursor: pointer;
+    border: 1px solid var(--rule); border-radius: 3px;
+    background: var(--bg); color: var(--muted);
+  }
+  .copy-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .copy-btn:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+  .copy-btn.done { border-color: var(--pass); color: var(--pass); }
+
+  /* Nota / atribución */
+  .callout {
+    border: 1px solid var(--rule); border-left: 3px solid var(--azul-medio);
+    background: var(--surface); border-radius: 0 3px 3px 0;
+    padding: 14px 18px; margin: 0 0 22px; font-size: 15px; line-height: 1.55;
+    max-width: 72ch;
+  }
+  .callout .c-tag {
+    font-family: var(--mono); font-size: 10.5px; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--muted); font-weight: 700;
+    display: block; margin-bottom: 6px;
+  }
+  .attribution {
+    display: inline-flex; align-items: center; gap: 9px;
+    font-family: var(--mono); font-size: 12.5px; letter-spacing: 0.02em;
+    border: 1px solid var(--rule); background: var(--surface);
+    border-radius: 3px; padding: 8px 13px; color: var(--muted); margin: 0 0 18px;
+  }
+  .attribution b { color: var(--ink); font-weight: 650; }
+
+  footer {
+    margin-top: 70px; padding-top: 18px; border-top: 1px solid var(--rule);
+    font-family: var(--mono); font-size: 11.5px; color: var(--muted); letter-spacing: 0.04em;
+  }
+
+  @media (max-width: 720px) {
+    body { font-size: 16px; }
+    section { padding: 48px 0 8px; }
+    .hero-inner { padding: 72px 22px 56px; }
+  }
+</style>
+</head>
+<body>
+
+<div class="progress" id="progress" aria-hidden="true"></div>
+
+<div class="topbar">
+  <a class="wordmark" href="index.html">cristopher <b>lemos</b></a>
+  <button class="theme-toggle" id="themeToggle" type="button" aria-label="Cambiar tema">
+    <span class="only-light">modo oscuro</span><span class="only-dark">modo claro</span>
+  </button>
+</div>
+
+<!-- Hero: la portada del deck -->
+<header class="hero">
+  <div class="hero-inner">
+    <h1>Prompts para desarrolladores</h1>
+    <div class="h-accent"></div>
+    <div class="h-name">Cristopher Lemos</div>
+    <div class="h-date">ENERO 2025</div>
+    <p class="h-origin">Material preparado originalmente en Iguana Digital, el estudio digital de mi familia, donde soy socio y asesor.</p>
+  </div>
+</header>
+
+<main>
+
+  <p class="transparency">Versión web (julio 2026) del deck original de enero de 2025.</p>
+  <p class="transparency">Canónico textual: <a href="https://github.com/CLemosCamp/taller-con-recibos/blob/main/prompts-para-desarrolladores.md">ver el .md</a> · <a href="prompts-para-desarrolladores.md" download>descargar .md</a></p>
+
+  <!-- Contenido / agenda -->
+  <section id="contenido">
+    <div class="eyebrow">Contenido</div>
+    <h2>Lo que veremos</h2>
+    <p class="lead">Cuatro técnicas de prompting, más una técnica extra de refinamiento, el framework CO-STAR y los notebooks de práctica.</p>
+    <nav class="agenda" aria-label="Contenido del taller">
+      <a class="card" href="#zero-shot">
+        <span class="band">01</span>
+        <span class="card-body">Zero-Shot Prompting</span>
+      </a>
+      <a class="card" href="#few-shot">
+        <span class="band">02</span>
+        <span class="card-body">Few-Shot Prompting</span>
+      </a>
+      <a class="card" href="#cot">
+        <span class="band">03</span>
+        <span class="card-body">Chain-of-Thought Prompting</span>
+      </a>
+      <a class="card" href="#meta">
+        <span class="band">04</span>
+        <span class="card-body">Meta Prompting</span>
+      </a>
+      <a class="card" href="#refinar">
+        <span class="band">PLUS</span>
+        <span class="card-body">Refinar tu prompt<span class="card-sub">Self-Reflective / Iterative Refinement</span></span>
+      </a>
+      <a class="card" href="#costar">
+        <span class="band">FRAMEWORK</span>
+        <span class="card-body">CO-STAR</span>
+      </a>
+      <a class="card" href="#notebooks">
+        <span class="band">PRÁCTICA</span>
+        <span class="card-body">Notebooks: Google Colab</span>
+      </a>
+    </nav>
+    <p class="note">Cada tarjeta lleva a su sección.</p>
+  </section>
+
+  <!-- Intro técnicas -->
+  <section id="tecnicas">
+    <div class="eyebrow">Técnicas de prompting</div>
+    <h2>Cuatro técnicas para empezar</h2>
+    <p class="lead">Existen varias técnicas de prompting útiles. En esta sesión vamos a explorar 4 de ellas: Zero-Shot, Few-Shot, Chain-of-Thought y Meta Prompting.</p>
+    <p>En los siguientes enlaces podemos encontrar una guía con más técnicas de prompting:</p>
+    <ul>
+      <li><a href="https://www.promptingguide.ai/techniques">promptingguide.ai/techniques</a></li>
+      <li><a href="https://www.techtarget.com/searchenterpriseai/definition/chain-of-thought-prompting">techtarget.com — Chain-of-thought prompting</a></li>
+    </ul>
+  </section>
+
+  <!-- 01 Zero-shot -->
+  <section id="zero-shot">
+    <div class="eyebrow">01 · Zero-shot prompting</div>
+    <h2>Zero-shot prompting</h2>
+    <p>El entrenamiento a gran escala hace que estos modelos sean capaces de realizar algunas tareas de manera &ldquo;zero-shot&rdquo; (sin ejemplos previos). El enfoque zero-shot significa que el prompt utilizado para interactuar con el modelo no contiene ejemplos ni demostraciones. El prompt zero-shot instruye directamente al modelo para realizar una tarea sin incluir ejemplos adicionales que lo guíen.</p>
+
+    <p class="io-label">Input</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Clasifica el texto como neutral, negativo o positivo.
+Texto: Creo que las vacaciones están bien.
+Sentimiento:</pre>
+    </div>
+    <p class="io-label">Output esperado: <span class="val">Neutral</span></p>
+  </section>
+
+  <!-- 02 Few-shot -->
+  <section id="few-shot">
+    <div class="eyebrow">02 · Few-shot prompting</div>
+    <h2>Few-shot prompting</h2>
+    <p>Aunque los modelos de lenguaje a gran escala demuestran capacidades notables en configuraciones zero-shot, todavía presentan limitaciones en tareas más complejas al usar este enfoque. La técnica de few-shot prompting se puede utilizar para habilitar el aprendizaje en contexto, proporcionando demostraciones en el prompt que guíen al modelo hacia un mejor rendimiento. Las demostraciones sirven como condicionamiento para ejemplos posteriores en los que se espera que el modelo genere una respuesta.</p>
+
+    <p class="io-label">Input</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>¡Esto es increíble! // Positivo
+¡Esto es malo! // Negativo
+¡Guau, esa película estuvo genial! // Positivo
+¡Qué espectáculo tan horrible! //</pre>
+    </div>
+    <p class="io-label">Output esperado: <span class="val">Negativo</span></p>
+  </section>
+
+  <!-- 03 Chain-of-thought -->
+  <section id="cot">
+    <div class="eyebrow">03 · Chain-of-thought prompting</div>
+    <h2>Chain-of-thought prompting</h2>
+    <p>El chain of thought prompting es una técnica que permite a los modelos de lenguaje generar respuestas más precisas y coherentes para tareas complejas al incentivar un razonamiento paso a paso. En lugar de proporcionar solo una instrucción o ejemplos aislados, el prompt guía al modelo para desglosar el problema en una secuencia lógica de pasos intermedios antes de llegar a la respuesta final. Este enfoque mejora el rendimiento en tareas que requieren razonamiento matemático, deducción lógica o análisis más profundo.</p>
+    <p>Ejemplo de uso con un modelo de lenguaje:</p>
+
+    <p class="io-label">Entrada</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Un granjero tiene 15 manzanas. Decide dar 3 manzanas a cada uno de sus 4 hijos. ¿Cuántas manzanas le quedan?</pre>
+    </div>
+    <p class="io-label">Salida esperada</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Primero, calculamos cuántas manzanas da el granjero en total. Si cada hijo recibe 3 manzanas y hay 4 hijos:
+3 x 4 = 12 manzanas.
+Luego, restamos las manzanas que dio del total que tenía:
+15 - 12 = 3 manzanas.
+
+Respuesta final: El granjero se queda con 3 manzanas.</pre>
+    </div>
+    <p>Este enfoque enseña al modelo a razonar progresivamente, facilitando una respuesta más precisa incluso en tareas complejas.</p>
+
+    <h3>Ejemplo de prompt</h3>
+    <p class="objetivo"><b>Instrucción general:</b> Responde las siguientes preguntas y explica tu razonamiento paso a paso antes de dar una respuesta final.</p>
+
+    <p class="io-label">Ejemplos en el prompt</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Pregunta: Un tren viaja a 60 km/h y tarda 2 horas en llegar a su destino. ¿Qué distancia recorre el tren?
+Razonamiento: La velocidad del tren es de 60 km/h. Esto significa que en una hora recorre 60 km. Como tarda 2 horas, multiplicamos la velocidad por el tiempo:
+60 km/h × 2 h = 120 km.
+Respuesta: El tren recorre 120 km.
+
+Pregunta: Si tienes 20 caramelos y das 4 caramelos a cada uno de tus 5 amigos, ¿cuántos caramelos te quedan?
+Razonamiento: Primero, calculamos cuántos caramelos repartiste en total. Multiplicamos la cantidad de caramelos por amigo (4) por el número de amigos (5):
+4 × 5 = 20 caramelos.
+Luego, restamos los caramelos que repartiste del total que tenías:
+20 - 20 = 0 caramelos.
+Respuesta: Te quedan 0 caramelos.</pre>
+    </div>
+    <p class="io-label">Nueva entrada (para que el modelo aplique el patrón)</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Pregunta: Un grupo de 8 personas comparte una cuenta de restaurante de $240 de manera equitativa. ¿Cuánto debe pagar cada persona?</pre>
+    </div>
+    <p class="io-label">Resultado esperado</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Razonamiento: El total de la cuenta es $240, y se divide equitativamente entre 8 personas. Para calcular cuánto paga cada persona, dividimos el total entre el número de personas:
+240 ÷ 8 = 30.
+Respuesta: Cada persona debe pagar $30.</pre>
+    </div>
+  </section>
+
+  <!-- 04 Meta prompting -->
+  <section id="meta">
+    <div class="eyebrow">04 · Meta prompting</div>
+    <h2>Meta prompting</h2>
+    <p>El meta prompting es una técnica avanzada que guía a un modelo de lenguaje a adoptar un comportamiento específico o un enfoque en sus respuestas al incluir instrucciones sobre cómo razonar o estructurar su salida dentro del propio prompt. Este método utiliza &ldquo;metacognición&rdquo; (pensamiento sobre el pensamiento) para instruir al modelo sobre cómo abordar una tarea, asegurando que siga un proceso más reflexivo y estructurado.</p>
+    <p>En esencia, el modelo no solo responde a la pregunta principal, sino que primero define su enfoque para resolver el problema, lo que permite un razonamiento más claro y deliberado.</p>
+
+    <h3>Ejemplo de meta prompting</h3>
+    <p class="objetivo"><b>Instrucción general:</b> Antes de responder a cualquier pregunta, reflexiona sobre la tarea, identifica los pasos necesarios para resolverla y luego proporciona tu respuesta final basada en ese razonamiento.</p>
+
+    <p class="io-label">Ejemplos en el prompt</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Pregunta: ¿Cuántos días hay en 3 semanas?
+Reflexión: Primero, necesito recordar que una semana tiene 7 días. Luego, debo multiplicar el número de semanas (3) por la cantidad de días en una semana (7).
+Cálculo: 3 × 7 = 21 días.
+Respuesta: Hay 21 días en 3 semanas.
+
+Pregunta: Si un coche consume 5 litros de gasolina por cada 100 kilómetros y el tanque tiene 40 litros, ¿qué distancia puede recorrer con un tanque lleno?
+Reflexión: Primero, necesito determinar cuántos kilómetros puede recorrer con 1 litro de gasolina. Luego, multiplicaré esa distancia por la capacidad del tanque.
+Cálculo: Con 1 litro, el coche recorre 100 ÷ 5 = 20 kilómetros. Con 40 litros, recorrerá 40 × 20 = 800 kilómetros.
+Respuesta: El coche puede recorrer 800 kilómetros con un tanque lleno.</pre>
+    </div>
+    <p class="io-label">Nueva entrada (para que el modelo aplique el patrón)</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Pregunta: Una panadería produce 150 panes al día. Si trabaja 6 días a la semana, ¿cuántos panes produce en una semana?</pre>
+    </div>
+    <p class="io-label">Resultado esperado</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Reflexión: Primero, necesito calcular cuántos panes produce la panadería en un día y luego multiplicar esa cantidad por los días que trabaja en una semana.
+Cálculo: 150 × 6 = 900 panes.
+Respuesta: La panadería produce 900 panes en una semana.</pre>
+    </div>
+  </section>
+
+  <!-- Plus: refinar -->
+  <section id="refinar">
+    <div class="eyebrow">Plus · Solicitar que refine tu prompt</div>
+    <h2>Self-Reflective / Iterative Refinement Prompting</h2>
+    <p>Esta técnica se llama &ldquo;Self-Reflective Prompting&rdquo; o &ldquo;Iterative Refinement Prompting&rdquo;, y consiste en usar el modelo de lenguaje para colaborar en la mejora de un prompt inicial. En este enfoque, el modelo actúa como un asistente crítico que plantea preguntas, sugiere ajustes o identifica lagunas en el prompt inicial, ayudándote a definir el mejor prompt para tu caso específico.</p>
+
+    <h3>¿Cómo funciona?</h3>
+    <ol>
+      <li><b>Inicia con un prompt básico:</b> proporcionas al modelo un primer borrador del prompt que tienes en mente.</li>
+      <li><b>Solicita retroalimentación:</b> pides al modelo que formule preguntas o sugiera mejoras para aclarar, especificar o ampliar el alcance del prompt.</li>
+      <li><b>Itera sobre el diseño:</b> basándote en las preguntas y sugerencias del modelo, ajustas el prompt y repites el proceso hasta que estés satisfecho con el resultado.</li>
+    </ol>
+
+    <h3>Ejemplo de uso</h3>
+    <p class="io-label">Entrada inicial</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Estoy intentando diseñar un prompt que haga que el modelo resuma artículos largos en un lenguaje simple y apto para niños. Por favor, hazme preguntas o proporciona sugerencias para refinar este prompt y hacerlo más efectivo.</pre>
+    </div>
+    <p class="io-label">Respuesta del modelo</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>¿Qué nivel de comprensión de los niños esperas? (por ejemplo, edad o grado escolar).
+¿Prefieres un resumen muy breve o un resumen que incluya ciertos detalles clave?
+¿Hay palabras o temas específicos que debería evitar para mantener el lenguaje apropiado para niños?
+¿Cuánto énfasis debería dar el modelo a la claridad frente a la precisión del contenido original?
+¿Debería seguir algún formato especial, como párrafos o listas con viñetas?</pre>
+    </div>
+    <p class="io-label">Ajuste del prompt</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Por favor, resume el siguiente artículo en lenguaje simple para niños de entre 8 y 10 años. Mantén las oraciones cortas y usa palabras fáciles de entender. Evita temas complejos o inadecuados para esta edad. Proporciona el resumen como una lista de 3 a 5 viñetas para facilitar su lectura.</pre>
+    </div>
+
+    <h3>Caso práctico con un modelo de lenguaje</h3>
+    <p class="io-label">Primera entrada</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>Estoy diseñando un prompt para generar ideas creativas para campañas publicitarias en redes sociales. Ayúdame a refinarlo formulando preguntas o sugiriendo mejoras.</pre>
+    </div>
+    <p class="io-label">Posible respuesta del modelo</p>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre>¿Qué tipo de producto o servicio estás promocionando?
+¿Cuál es tu público objetivo? (edad, intereses, etc.)
+¿Prefieres ideas para campañas específicas de una plataforma o multiplataforma?
+¿Qué tono o estilo debe tener la campaña (divertido, serio, educativo, etc.)?
+¿Hay algo que definitivamente debería incluirse o evitarse?</pre>
+    </div>
+  </section>
+
+  <!-- CO-STAR -->
+  <section id="costar">
+    <div class="eyebrow">Framework · CO-STAR</div>
+    <h2>Estructurar prompts efectivos: el marco CO-STAR</h2>
+    <p class="attribution">Autor del framework: <b>Sheila Teo</b> · equipo de Ciencia de Datos e IA de GovTech Singapur</p>
+    <p>La estructura efectiva de prompts es clave para obtener respuestas óptimas de un modelo de lenguaje grande (LLM). El marco CO-STAR es una plantilla útil que abarca los aspectos clave para mejorar la efectividad y relevancia de las respuestas del LLM. Sus componentes son:</p>
+    <ul>
+      <li><b>Contexto (C):</b> proporcionar información de fondo sobre la tarea para que el LLM comprenda el escenario específico y dé respuestas relevantes.</li>
+      <li><b>Objetivo (O):</b> definir claramente la tarea que quieres que el LLM realice para enfocar su respuesta en cumplir ese objetivo.</li>
+      <li><b>Estilo (S):</b> especificar el estilo de escritura deseado, como el de un analista de negocios, un CEO, o un personaje famoso, para guiar la forma en que el modelo responde.</li>
+      <li><b>Tono (T):</b> determinar la actitud o el sentimiento de la respuesta, como formal, humorístico o empático, para alinear el mensaje con el contexto emocional requerido.</li>
+      <li><b>Audiencia (A):</b> identificar quién recibirá la respuesta (expertos, principiantes, niños, etc.) para asegurar que sea apropiada y comprensible.</li>
+      <li><b>Formato de respuesta (R):</b> especificar el formato deseado (lista, JSON, informe profesional, etc.) para cumplir con las necesidades posteriores.</li>
+    </ul>
+
+    <h3>Ejemplo de prompt</h3>
+    <div class="callout">
+      <span class="c-tag">Nota sobre el ejemplo</span>
+      El framework CO-STAR es de Sheila Teo y el equipo de GovTech Singapur. El ejemplo original de Sheila Teo (empresa &ldquo;Alpha&rdquo;, secador &ldquo;Beta&rdquo;, estilo Dyson) se adaptó aquí a un caso equivalente del universo del taller &mdash;una distribuidora que surte tienditas&mdash; manteniendo idéntica la estructura CO-STAR.
+    </div>
+    <div class="codeblock">
+      <button class="copy-btn" type="button">copiar</button>
+      <pre># CONTEXTO #
+Quiero promocionar una nueva promoción de mi distribuidora entre las tienditas que surto. El nombre de mi distribuidora es Surtimás y la promoción se llama Combo Abarrote, un paquete de productos de alta rotación con precio preferente y entrega al día siguiente.
+
+# OBJETIVO #
+Crear una publicación para redes sociales que motive a los tenderos a pedir el Combo Abarrote a través de la app de pedidos.
+
+# ESTILO #
+Sigue el estilo de comunicación de distribuidoras exitosas que hablan directo al comerciante de barrio, con mensajes claros y prácticos.
+
+# TONO #
+Cercano y persuasivo.
+
+# AUDIENCIA #
+El público son dueños de tienditas de barrio que buscan surtir rápido, cuidar su margen y no quedarse sin producto. Adapta la publicación para enfocarte en lo que este público suele buscar: ahorro, rapidez y productos que se venden solos.
+
+# RESPUESTA #
+La publicación para redes sociales debe ser concisa pero impactante.</pre>
+    </div>
+  </section>
+
+  <!-- Notebooks -->
+  <section id="notebooks">
+    <div class="eyebrow">Práctica · Notebooks</div>
+    <h2>Notebooks: Google Colab</h2>
+    <p>El taller se acompaña de notebooks en Google Colab para practicar las técnicas anteriores de forma interactiva.</p>
+  </section>
+
+  <footer>prompts para desarrolladores · ene 2025 · versión web jul 2026</footer>
+
+</main>
+
+<script>
+  (function () {
+    var root = document.documentElement;
+    var btn = document.getElementById("themeToggle");
+    btn.addEventListener("click", function () {
+      var current = root.getAttribute("data-theme");
+      if (!current) {
+        current = window.matchMedia("(prefers-color-scheme: dark)").matches ? "dark" : "light";
+      }
+      root.setAttribute("data-theme", current === "dark" ? "light" : "dark");
+    });
+
+    var bar = document.getElementById("progress");
+    function update() {
+      var doc = document.documentElement;
+      var max = doc.scrollHeight - window.innerHeight;
+      var pct = max > 0 ? (window.scrollY / max) * 100 : 0;
+      bar.style.width = pct + "%";
+    }
+    window.addEventListener("scroll", update, { passive: true });
+    window.addEventListener("resize", update, { passive: true });
+    update();
+
+    // Copiar bloques de prompt
+    document.querySelectorAll(".copy-btn").forEach(function (b) {
+      b.addEventListener("click", function () {
+        var pre = b.parentNode.querySelector("pre");
+        if (!pre) return;
+        var text = pre.innerText;
+        var done = function () {
+          var prev = b.textContent;
+          b.textContent = "copiado";
+          b.classList.add("done");
+          setTimeout(function () { b.textContent = prev; b.classList.remove("done"); }, 1600);
+        };
+        if (navigator.clipboard && navigator.clipboard.writeText) {
+          navigator.clipboard.writeText(text).then(done).catch(function () {});
+        } else {
+          var ta = document.createElement("textarea");
+          ta.value = text; document.body.appendChild(ta); ta.select();
+          try { document.execCommand("copy"); done(); } catch (e) {}
+          document.body.removeChild(ta);
+        }
+      });
+    });
+  })();
+</script>
+</body>
+</html>
