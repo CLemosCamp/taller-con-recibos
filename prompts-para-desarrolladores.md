@@ -272,6 +272,12 @@ La publicación para redes sociales debe ser concisa pero impactante.
 
 El taller se acompaña de notebooks en Google Colab para practicar las técnicas anteriores de forma interactiva.
 
+## Referencias
+
+- Técnicas de prompting (zero-shot, few-shot, meta) y ejemplos — <https://www.promptingguide.ai/techniques>
+- Chain-of-thought prompting (definición) — <https://www.techtarget.com/searchenterpriseai/definition/chain-of-thought-prompting>
+- Framework CO-STAR — Sheila Teo · equipo de Ciencia de Datos e IA de GovTech Singapur
+
 ---
 
 *Prompts para desarrolladores · Cristopher Lemos · enero 2025 · versión markdown julio 2026*
